@@ -1,5 +1,5 @@
 import React from "react";
-import weddingLogo from "../../images/LK_CREST_2.png";
+import weddingLogo from "../../images/LK_CREST_BLACK_WHITE.png";
 import './Home.css';
 import '../../Components/Countdown/Countdown.js';
 import Countdown from "../../Components/Countdown/Countdown.js";
