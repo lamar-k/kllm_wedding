@@ -1,6 +1,8 @@
 import React from "react";
 import weddingLogo from "../../images/LK_CREST_2.png";
 import './Home.css';
+import '../../Components/Countdown/Countdown.js';
+import Countdown from "../../Components/Countdown/Countdown.js";
 
 function Home() {
     return (
@@ -14,7 +16,7 @@ function Home() {
                <h2 style={{color:'#B8663A'}} className="script_text">Lauren + Ken</h2>
                <h3 style={{color:'#B8663A'}} className="script_subtext">June 13th 2026 &middot; Washington D.C.</h3>
             </div>
-
+            <Countdown/>
         </div>
     );
     }
