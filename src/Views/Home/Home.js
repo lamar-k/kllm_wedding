@@ -9,11 +9,6 @@ import LKIMAGE from "../../images/LK_HOME.png";
 function Home() {
     return (
         <div className="home">
-            <div>
-                <img src={weddingLogo} alt="LK Wedding Logo" className="logo"
-                style={{display:'flex', width:'100%', maxHeight:'20vh', objectFit:'contain', marginBottom:'-10px', marginTop:'10px'}}
-                />
-            </div>
             <div className="header-text">
                <h2 style={{color:'black'}} className="script_text">Lauren + Ken</h2>
                <h3 style={{color:'black'}} className="script_subtext">June 13, 2026 &emsp; | &emsp; Washington, D.C.</h3>
