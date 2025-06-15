@@ -14,8 +14,8 @@ function Home() {
                 />
             </div>
             <div className="header-text">
-               <h2 style={{color:'#B8663A'}} className="script_text">Lauren + Ken</h2>
-               <h3 style={{color:'#B8663A'}} className="script_subtext">June 13th 2026 &middot; Washington D.C.</h3>
+               <h2 style={{color:'black'}} className="script_text">Lauren + Ken</h2>
+               <h3 style={{color:'black'}} className="script_subtext">June 13th 2026 &middot; Washington D.C.</h3>
             </div>
             <Countdown/>
 
