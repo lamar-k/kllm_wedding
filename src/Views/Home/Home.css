@@ -1,0 +1,13 @@
+.script_text{
+    font-family: 'Dancing Script', cursive, monospace;
+    font-size: 40px;
+    line-height: 1.5;
+    margin: 20px;
+}
+
+.script_subtext{
+    font-family: 'Alex Brush', cursive;
+    font-size: 60px;
+    line-height: 1.5;
+    margin: 20px;
+}
