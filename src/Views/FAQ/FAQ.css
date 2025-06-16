@@ -1,0 +1,31 @@
+.faq{
+    margin-top: 50px;
+}
+
+.faq-item {
+    margin-bottom: 80px;
+} 
+
+h2{
+    font-family: 'Questrial', sans-serif;
+    font-size: 40px;
+    line-height: 1.5;
+}
+
+h3{
+    font-family: 'Questrial', sans-serif;
+    font-size: 30px;
+    line-height: 1.5;
+}
+
+.headers{
+    font-family: 'Questrial', sans-serif;
+    font-size: 40px;
+    line-height: 1.5;
+}
+
+
+.answers{
+    font-family: 'Questrial', sans-serif;
+    font-size: 20px;
+}
