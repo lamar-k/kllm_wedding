@@ -5,6 +5,7 @@ import React from 'react';
 import Home from './Views/Home/Home';
 import weddingLogo from './images/LK_CREST_BLACK_WHITE.png';
 import FAQ from './Views/FAQ/FAQ';
+import Schedule from './Views/Schedule/Schedule';
 
 
 function App() {
@@ -16,6 +17,7 @@ function App() {
       <Router>
         <Routes>
           <Route path="/" element={<Home/>} />
+          <Route path="/schedule" element={<Schedule/>} />
           <Route path="/faq" element={<FAQ/>} />
         </Routes>
       </Router>
