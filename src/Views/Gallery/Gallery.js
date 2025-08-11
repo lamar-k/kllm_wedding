@@ -52,7 +52,7 @@ const Gallery = () => {
     }, [containerUrl, manifest_file]);
 
     if (loading) {
-        return <div>Loading...</div>;
+        return <div style={{justifyContent:'center', alignItems:'center', marginTop:'50%'}}>Loading...</div>;
     } 
 if (error) {
         return <div>Error: {error}</div>;
