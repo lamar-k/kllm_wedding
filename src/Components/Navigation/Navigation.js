@@ -14,7 +14,7 @@ function Navigation() {
             <nav className="nav-bar">
                 <Link to="/" className={getNavClass("/")}>Home</Link>
                 <Link to="/schedule" className={getNavClass("/schedule")}>Schedule</Link>
-                <Link to="/travel" className={getNavClass("/travel")}>Hotel/Accomodations</Link>
+                <Link to="/travel" className={getNavClass("/travel")}>Travel</Link>
                 <Link to="/things-to-do" className={getNavClass("/things-to-do")}>Activities in D.C.</Link>
                 <Link to="/gallery" className={getNavClass("/gallery")}>Gallery</Link>
                 <Link to="/registry" className={getNavClass("/registry")}>Registry</Link> 

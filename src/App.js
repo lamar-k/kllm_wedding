@@ -6,6 +6,8 @@ import Home from './Views/Home/Home';
 import weddingLogo from './images/LK_CREST_BLACK_WHITE.png';
 import FAQ from './Views/FAQ/FAQ';
 import Schedule from './Views/Schedule/Schedule';
+import Gallery from './Views/Gallery/Gallery';
+import Travel from './Views/Travel/Travel';
 
 
 function App() {
@@ -18,7 +20,9 @@ function App() {
         <Routes>
           <Route path="/" element={<Home/>} />
           <Route path="/schedule" element={<Schedule/>} />
+          <Route path="/gallery" element={<Gallery/>} />
           <Route path="/faq" element={<FAQ/>} />
+          <Route path="/travel" element={<Travel/>} />
         </Routes>
       </Router>
     </div>
