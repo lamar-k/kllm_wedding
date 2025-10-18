@@ -4,6 +4,8 @@ import '../../Components/Countdown/Countdown.js';
 import Countdown from "../../Components/Countdown/Countdown.js";
 import Navigation from '../../Components/Navigation/Navigation.js';
 import LKIMAGE from "../../images/LK_HOME.png";
+import {Button } from "@mui/material";
+
 
 function Home() {
     return (
@@ -13,6 +15,14 @@ function Home() {
                <h3 style={{color:'black'}} className="script_subtext">June 13, 2026 &emsp; | &emsp; Washington, D.C.</h3>
             </div>
             <Countdown/>
+
+            <div>
+            <Button variant="outlined" sx={{color:'black', 
+                    transition: 'box-shadow 0.3s ease-in-out', borderColor:'black'
+                    , '&:hover': {color:'white', borderColor:'white', backgroundColor:'black'}}}>
+                        RSVP HERE
+                    </Button>
+            </div>
 
             <Navigation/>
 
