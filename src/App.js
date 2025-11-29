@@ -8,6 +8,7 @@ import FAQ from './Views/FAQ/FAQ';
 import Schedule from './Views/Schedule/Schedule';
 import Gallery from './Views/Gallery/Gallery';
 import Travel from './Views/Travel/Travel';
+import Activities from './Views/Activities/Activities';
 
 
 function App() {
@@ -23,6 +24,7 @@ function App() {
           <Route path="/gallery" element={<Gallery/>} />
           <Route path="/faq" element={<FAQ/>} />
           <Route path="/travel" element={<Travel/>} />
+          <Route path="/things-to-do" element={<Activities/>} />
         </Routes>
       </Router>
     </div>
