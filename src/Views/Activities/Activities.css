@@ -1,0 +1,45 @@
+.activities {
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.activities-container {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.activities-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.activities-header h2 {
+    font-family: 'Pinyon Script', cursive;
+    font-size: 48px;
+    color: black;
+    margin-bottom: 10px;
+}
+
+.activities-header p {
+    color: #666;
+    font-size: 16px;
+}
+
+.activities-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    margin-top: 20px;
+}
+
+.chat-section,
+.map-section {
+    width: 100%;
+}
+
+@media (max-width: 968px) {
+    .activities-content {
+        grid-template-columns: 1fr;
+    }
+}
+
