@@ -1,6 +1,8 @@
-import React, { useEffect, useRef, useCallback } from "react";
-import { Box, Typography, Paper, Chip } from "@mui/material";
+import React, { useEffect, useRef, useCallback, useState } from "react";
+import { Box, Typography, Paper, Chip, CircularProgress } from "@mui/material";
 import LocationOnIcon from '@mui/icons-material/LocationOn';
+import DirectionsCarIcon from '@mui/icons-material/DirectionsCar';
+import DirectionsWalkIcon from '@mui/icons-material/DirectionsWalk';
 import * as atlas from 'azure-maps-control';
 import 'azure-maps-control/dist/atlas.min.css';
 import './Map.css';
@@ -9,7 +11,11 @@ const Map = ({ locations }) => {
     const mapRef = useRef(null);
     const mapInstanceRef = useRef(null);
     const dataSourceRef = useRef(null);
+    const drivingRouteDataSourceRef = useRef(null);
+    const walkingRouteDataSourceRef = useRef(null);
     const isMapReadyRef = useRef(false);
+    const [routeInfo, setRouteInfo] = useState(null);
+    const [loadingRoutes, setLoadingRoutes] = useState(false);
 
     const updateMarkers = useCallback((map, dataSource, locs) => {
         dataSource.clear();
@@ -106,6 +112,13 @@ const Map = ({ locations }) => {
             map.sources.add(dataSource);
             dataSourceRef.current = dataSource;
 
+            const drivingRouteDataSource = new atlas.source.DataSource();
+            map.sources.add(drivingRouteDataSource);
+            drivingRouteDataSourceRef.current = drivingRouteDataSource;
+
+            const walkingRouteDataSource = new atlas.source.DataSource();
+            map.sources.add(walkingRouteDataSource);
+            walkingRouteDataSourceRef.current = walkingRouteDataSource;
 
             if (locations.length > 0) {
                 updateMarkers(map, dataSource, locations);
@@ -121,13 +134,215 @@ const Map = ({ locations }) => {
             }
         };
     }, [updateMarkers]); 
+    const calculateRoutes = useCallback(async (locs) => {
+        if (locs.length < 2) {
+            setRouteInfo(null);
+            if (drivingRouteDataSourceRef.current) {
+                drivingRouteDataSourceRef.current.clear();
+            }
+            if (walkingRouteDataSourceRef.current) {
+                walkingRouteDataSourceRef.current.clear();
+            }
+            return;
+        }
+
+        const subscriptionKey = process.env.REACT_APP_AZURE_MAPS_SUBSCRIPTION_KEY;
+        if (!subscriptionKey) {
+            return;
+        }
+
+        setLoadingRoutes(true);
+
+        try {
+            const routePromises = [];
+            
+            for (let i = 0; i < locs.length - 1; i++) {
+                const origin = locs[i];
+                const destination = locs[i + 1];
+                
+                const drivingPromise = fetch(
+                    `https://atlas.microsoft.com/route/directions/json?api-version=1.0&subscription-key=${subscriptionKey}&query=${origin.lat},${origin.lng}:${destination.lat},${destination.lng}&travelMode=car`
+                ).then(res => res.json());
+
+                const walkingPromise = fetch(
+                    `https://atlas.microsoft.com/route/directions/json?api-version=1.0&subscription-key=${subscriptionKey}&query=${origin.lat},${origin.lng}:${destination.lat},${destination.lng}&travelMode=pedestrian`
+                ).then(res => res.json());
+
+                routePromises.push({ driving: drivingPromise, walking: walkingPromise, from: origin, to: destination });
+            }
+
+            const results = await Promise.all(
+                routePromises.map(async ({ driving, walking, from, to }) => {
+                    try {
+                        const [drivingResponse, walkingResponse] = await Promise.all([driving, walking]);
+                        
+                        if (drivingResponse.error || walkingResponse.error) {
+                            console.error('Route API error:', drivingResponse.error || walkingResponse.error);
+                            return {
+                                from: from.name,
+                                to: to.name,
+                                drivingTime: 0,
+                                walkingTime: 0,
+                                drivingDistance: 0,
+                                walkingDistance: 0,
+                                drivingRoute: [],
+                                walkingRoute: [],
+                                error: true
+                            };
+                        }
+                        
+                        const drivingTime = drivingResponse.routes?.[0]?.summary?.travelTimeInSeconds || 0;
+                        const walkingTime = walkingResponse.routes?.[0]?.summary?.travelTimeInSeconds || 0;
+                        const drivingDistance = drivingResponse.routes?.[0]?.summary?.lengthInMeters || 0;
+                        const walkingDistance = walkingResponse.routes?.[0]?.summary?.lengthInMeters || 0;
+
+                        let drivingRoute = [];
+                        let walkingRoute = [];
+                        
+                        if (drivingResponse.routes?.[0]?.legs?.[0]?.points) {
+                            const points = drivingResponse.routes[0].legs[0].points;
+                            drivingRoute = points.map(pt => {
+                                if (Array.isArray(pt)) {
+                                    return [pt[1], pt[0]]; // Convert [lat, lng] to [lng, lat]
+                                }
+                                return [pt.longitude || pt.lng, pt.latitude || pt.lat];
+                            });
+                        }
+                        
+                        if (walkingResponse.routes?.[0]?.legs?.[0]?.points) {
+                            const points = walkingResponse.routes[0].legs[0].points;
+                            walkingRoute = points.map(pt => {
+                                if (Array.isArray(pt)) {
+                                    return [pt[1], pt[0]];
+                                }
+                                return [pt.longitude || pt.lng, pt.latitude || pt.lat];
+                            });
+                        }
+
+                        return {
+                            from: from.name,
+                            to: to.name,
+                            drivingTime,
+                            walkingTime,
+                            drivingDistance,
+                            walkingDistance,
+                            drivingRoute,
+                            walkingRoute,
+                            error: false
+                        };
+                    } catch (error) {
+                        console.error('Error processing route:', error);
+                        return {
+                            from: from.name,
+                            to: to.name,
+                            drivingTime: 0,
+                            walkingTime: 0,
+                            drivingDistance: 0,
+                            walkingDistance: 0,
+                            drivingRoute: [],
+                            walkingRoute: [],
+                            error: true
+                        };
+                    }
+                })
+            );
+
+            const totalDrivingTime = results.reduce((sum, r) => sum + r.drivingTime, 0);
+            const totalWalkingTime = results.reduce((sum, r) => sum + r.walkingTime, 0);
+            const totalDrivingDistance = results.reduce((sum, r) => sum + r.drivingDistance, 0);
+            const totalWalkingDistance = results.reduce((sum, r) => sum + r.walkingDistance, 0);
+
+            setRouteInfo({
+                segments: results,
+                totalDrivingTime,
+                totalWalkingTime,
+                totalDrivingDistance,
+                totalWalkingDistance
+            });
+
+            if (mapInstanceRef.current && drivingRouteDataSourceRef.current && walkingRouteDataSourceRef.current) {
+                drivingRouteDataSourceRef.current.clear();
+                walkingRouteDataSourceRef.current.clear();
+                
+                const existingDrivingLayer = mapInstanceRef.current.layers.getLayers().find(
+                    layer => layer instanceof atlas.layer.LineLayer && layer.getId() === 'driving-route-layer'
+                );
+                if (existingDrivingLayer) {
+                    mapInstanceRef.current.layers.remove(existingDrivingLayer);
+                }
+
+                const existingWalkingLayer = mapInstanceRef.current.layers.getLayers().find(
+                    layer => layer instanceof atlas.layer.LineLayer && layer.getId() === 'walking-route-layer'
+                );
+                if (existingWalkingLayer) {
+                    mapInstanceRef.current.layers.remove(existingWalkingLayer);
+                }
+                
+                results.forEach((segment) => {
+                    if (segment.drivingRoute && segment.drivingRoute.length > 0 && !segment.error) {
+                        try {
+                            const routeLine = new atlas.data.LineString(segment.drivingRoute);
+                            drivingRouteDataSourceRef.current.add(new atlas.Shape(routeLine, null, {
+                                strokeColor: '#1976d2',
+                                strokeWidth: 4
+                            }));
+                        } catch (error) {
+                            console.error('Error drawing driving route:', error);
+                        }
+                    }
+                });
+
+                results.forEach((segment) => {
+                    if (segment.walkingRoute && segment.walkingRoute.length > 0 && !segment.error) {
+                        try {
+                            const routeLine = new atlas.data.LineString(segment.walkingRoute);
+                            walkingRouteDataSourceRef.current.add(new atlas.Shape(routeLine, null, {
+                                strokeColor: '#d32f2f',
+                                strokeWidth: 4
+                            }));
+                        } catch (error) {
+                            console.error('Error drawing walking route:', error);
+                        }
+                    }
+                });
+
+                if (results.some(r => r.drivingRoute && r.drivingRoute.length > 0 && !r.error)) {
+                    const drivingRouteLayer = new atlas.layer.LineLayer(drivingRouteDataSourceRef.current, null, {
+                        strokeColor: '#1976d2',
+                        strokeWidth: 4
+                    });
+                    mapInstanceRef.current.layers.add(drivingRouteLayer);
+                }
+
+                if (results.some(r => r.walkingRoute && r.walkingRoute.length > 0 && !r.error)) {
+                    const walkingRouteLayer = new atlas.layer.LineLayer(walkingRouteDataSourceRef.current, null, {
+                        strokeColor: '#d32f2f',
+                        strokeWidth: 4
+                    });
+                    mapInstanceRef.current.layers.add(walkingRouteLayer);
+                }
+            }
+        } catch (error) {
+            console.error('Error calculating routes:', error);
+            setRouteInfo(null);
+        } finally {
+            setLoadingRoutes(false);
+        }
+    }, []);
+
     useEffect(() => {
         if (!isMapReadyRef.current || !mapInstanceRef.current || !dataSourceRef.current) {
             return;
         }
 
         updateMarkers(mapInstanceRef.current, dataSourceRef.current, locations);
-    }, [locations, updateMarkers]);
+        
+        if (locations.length >= 2) {
+            calculateRoutes(locations);
+        } else {
+            setRouteInfo(null);
+        }
+    }, [locations, updateMarkers, calculateRoutes]);
 
     return (
         <div className="map-container">
@@ -182,6 +397,67 @@ const Map = ({ locations }) => {
                             />
                         ))}
                     </Box>
+                </Box>
+            )}
+            {locations.length >= 2 && (
+                <Box sx={{ mt: 2 }}>
+                    <Typography variant="subtitle2" sx={{ marginBottom: '12px', color: 'black', fontWeight: 'bold' }}>
+                        Travel Times:
+                    </Typography>
+                    {loadingRoutes ? (
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <CircularProgress size={20} />
+                            <Typography variant="body2" color="text.secondary">
+                                Calculating routes...
+                            </Typography>
+                        </Box>
+                    ) : routeInfo ? (
+                        <Box>
+                            <Paper elevation={1} sx={{ p: 2, mb: 2, backgroundColor: '#f5f5f5' }}>
+                                <Typography variant="subtitle2" sx={{ marginBottom: '8px', color: 'black' }}>
+                                    Total Travel Time:
+                                </Typography>
+                                <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                        <DirectionsCarIcon sx={{ color: '#1976d2' }} />
+                                        <Typography variant="body2">
+                                            <strong>Driving:</strong> {Math.round(routeInfo.totalDrivingTime / 60)} min
+                                            {' '}({Math.round(routeInfo.totalDrivingDistance / 1000 * 10) / 10} km)
+                                        </Typography>
+                                    </Box>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                        <DirectionsWalkIcon sx={{ color: '#d32f2f' }} />
+                                        <Typography variant="body2">
+                                            <strong>Walking:</strong> {Math.round(routeInfo.totalWalkingTime / 60)} min
+                                            {' '}({Math.round(routeInfo.totalWalkingDistance / 1000 * 10) / 10} km)
+                                        </Typography>
+                                    </Box>
+                                </Box>
+                            </Paper>
+                            
+                            {routeInfo.segments.map((segment, index) => (
+                                <Paper key={index} elevation={1} sx={{ p: 1.5, mb: 1 }}>
+                                    <Typography variant="body2" sx={{ fontWeight: 'bold', marginBottom: '4px' }}>
+                                        {segment.from} → {segment.to}
+                                    </Typography>
+                                    <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                            <DirectionsCarIcon sx={{ fontSize: 16, color: '#1976d2' }} />
+                                            <Typography variant="caption">
+                                                {Math.round(segment.drivingTime / 60)} min
+                                            </Typography>
+                                        </Box>
+                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                            <DirectionsWalkIcon sx={{ fontSize: 16, color: '#d32f2f' }} />
+                                            <Typography variant="caption">
+                                                {Math.round(segment.walkingTime / 60)} min
+                                            </Typography>
+                                        </Box>
+                                    </Box>
+                                </Paper>
+                            ))}
+                        </Box>
+                    ) : null}
                 </Box>
             )}
         </div>
