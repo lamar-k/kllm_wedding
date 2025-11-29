@@ -37,9 +37,6 @@ const Chat = ({ onNewMessage, messages }) => {
 
     return (
         <div className="chat-container">
-            <Typography variant="h6" sx={{ marginBottom: '10px', color: 'black' }}>
-                Activity Chat
-            </Typography>
             <Paper 
                 elevation={2} 
                 sx={{ 

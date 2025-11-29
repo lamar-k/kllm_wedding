@@ -60,7 +60,6 @@ const Activities = () => {
             <Navigation />
             <div className="activities-container">
                 <div className="activities-header">
-                    <h2>Activities in D.C.</h2>
                     <p>Chat about activities and see them appear on the map!</p>
                 </div>
                 <div className="activities-content">

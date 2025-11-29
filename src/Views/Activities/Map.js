@@ -131,9 +131,6 @@ const Map = ({ locations }) => {
 
     return (
         <div className="map-container">
-            <Typography variant="h6" sx={{ marginBottom: '10px', color: 'black' }}>
-                Activity Map
-            </Typography>
             <Paper elevation={2} sx={{ height: '500px', overflow: 'hidden' }}>
                 {process.env.REACT_APP_AZURE_MAPS_SUBSCRIPTION_KEY ? (
                     <div 
