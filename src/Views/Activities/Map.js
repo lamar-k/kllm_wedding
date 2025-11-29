@@ -94,7 +94,7 @@ const Map = ({ locations }) => {
             },
             center: [-77.0369, 38.9072], // Washington D.C. center
             zoom: 12,
-            style: 'road',
+            style: 'road_shaded_relief',
             language: 'en-US'
         });
 
