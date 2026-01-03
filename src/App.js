@@ -9,6 +9,7 @@ import Schedule from './Views/Schedule/Schedule';
 import Gallery from './Views/Gallery/Gallery';
 import Travel from './Views/Travel/Travel';
 import Activities from './Views/Activities/Activities';
+import Registry from './Views/Registry/Registry';
 
 
 function App() {
@@ -25,6 +26,7 @@ function App() {
           <Route path="/faq" element={<FAQ/>} />
           <Route path="/travel" element={<Travel/>} />
           <Route path="/things-to-do" element={<Activities/>} />
+          <Route path="/registry" element={<Registry/>} />
         </Routes>
       </Router>
     </div>
