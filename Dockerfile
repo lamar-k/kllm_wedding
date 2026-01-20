@@ -2,6 +2,11 @@ FROM node:18-alpine AS build
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci
+
+# Copy .env file if it exists, or use build args
+ARG REACT_APP_AZURE_MAPS_SUBSCRIPTION_KEY
+ENV REACT_APP_AZURE_MAPS_SUBSCRIPTION_KEY=$REACT_APP_AZURE_MAPS_SUBSCRIPTION_KEY
+
 COPY . .
 RUN npm run build
 FROM nginx:alpine

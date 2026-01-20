@@ -134,6 +134,7 @@ const Map = ({ locations }) => {
             }
         };
     }, [updateMarkers]); 
+
     const calculateRoutes = useCallback(async (locs) => {
         if (locs.length < 2) {
             setRouteInfo(null);

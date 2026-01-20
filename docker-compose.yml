@@ -5,6 +5,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        - REACT_APP_AZURE_MAPS_SUBSCRIPTION_KEY=${REACT_APP_AZURE_MAPS_SUBSCRIPTION_KEY:-}
     ports:
       - "3000:80"
     container_name: kllm_wedding
