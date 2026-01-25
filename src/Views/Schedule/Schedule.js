@@ -44,10 +44,10 @@ function Schedule() {
                     </Typography>
                     <Typography>Come join us for welcome drinks!</Typography>
                     <Typography>Shuttles will be provided from hotels to the venue</Typography>
-                    <Typography>The Salt Line</Typography>
-                    <Typography>79 Potomac Ave SE, Washington, DC 20003</Typography>
+                    <Typography>The Graham Georgetown</Typography>
+                    <Typography>1075 Thomas Jefferson St NW, Washington, DC 20007</Typography>
                     <div style={{marginLeft:'30px'}}>
-                    <MapRedirectFunction  latitude={process.env.REACT_APP_SL_LONG} longitude={process.env.REACT_APP_SL_LAT} label="The Salt Line"/>
+                    <MapRedirectFunction  latitude={process.env.REACT_APP_GH_LAT} longitude={process.env.REACT_APP_GH_LONG} label="The Graham Georgetown"/>
                     </div>
                     </TimelineContent>
                 </TimelineItem>
@@ -80,7 +80,7 @@ function Schedule() {
                     <Typography>The Iron Gate</Typography>
                     <Typography>1734 N St NW, Washington, DC 20036</Typography>
                     <div style={{marginLeft:'30px'}}>
-                    <MapRedirectFunction  latitude={process.env.REACT_APP_IG_LONG} longitude={process.env.REACT_APP_IG_LAT} label="The Iron Gate"/>
+                    <MapRedirectFunction  latitude={process.env.REACT_APP_IG_LAT} longitude={process.env.REACT_APP_IG_LONG} label="The Iron Gate Restaurant"/>
                     </div>
                     </TimelineContent>
                 </TimelineItem>
@@ -177,7 +177,7 @@ function Schedule() {
                     <Typography>The Church Key</Typography>
                     <Typography>1337 14th St NW, Washington, DC 20005</Typography>
                     <div style={{marginLeft:'30px'}}>
-                    <MapRedirectFunction  latitude={process.env.REACT_APP_CK_LONG} longitude={process.env.REACT_APP_CK_LAT} label="Chruch Key"/>
+                    <MapRedirectFunction  latitude={process.env.REACT_APP_CK_LAT} longitude={process.env.REACT_APP_CK_LONG} label="The Church Key"/>
                     </div>
                     </TimelineContent>
                 </TimelineItem>

@@ -3,7 +3,8 @@ import { Button } from "@mui/material";
 
 const MapRedirectFunction = ({latitude, longitude, label = 'Location'}) => {
     const handleRedirect = () => {
-        const googleMapsURL = `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}&query_place_id=${label}`;  
+        const encodedLabel = encodeURIComponent(label);
+        const googleMapsURL = `https://www.google.com/maps/search/?api=1&query=${encodedLabel}+${latitude},${longitude}`;
         window.open(googleMapsURL);
     };
 
