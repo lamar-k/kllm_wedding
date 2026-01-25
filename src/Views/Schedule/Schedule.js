@@ -63,7 +63,7 @@ function Schedule() {
                     variant="body2"
                     color="text.secondary"
                     >
-                    4:30 PM
+                    5:30 PM
                     </TimelineOppositeContent>
                     <TimelineSeparator>
                     <TimelineConnector />
@@ -76,8 +76,7 @@ function Schedule() {
                     <Typography variant="h6" component="span">
                         Arrival
                     </Typography>
-                    <Typography>Block hotels are within a 5 min walking distance, no shuttles will be provided</Typography>
-                    <Typography>Light drinks will be served upon arrival</Typography>
+                    <Typography>Block hotels are within a 5 min walking distance</Typography>
                     <Typography>The Iron Gate</Typography>
                     <Typography>1734 N St NW, Washington, DC 20036</Typography>
                     <div style={{marginLeft:'30px'}}>
@@ -92,7 +91,7 @@ function Schedule() {
                     variant="body2"
                     color="text.secondary"
                     >
-                    5:00 PM
+                    5:45 PM
                     </TimelineOppositeContent>
                     <TimelineSeparator>
                     <TimelineConnector />
@@ -115,7 +114,7 @@ function Schedule() {
                     variant="body2"
                     color="text.secondary"
                     >
-                    5:15 PM
+                    6:00 PM
                     </TimelineOppositeContent>
                     <TimelineSeparator>
                     <TimelineConnector />
@@ -138,7 +137,7 @@ function Schedule() {
                     variant="body2"
                     color="text.secondary"
                     >
-                    6:00 PM - 10:30PM
+                    6:45 PM - 10:45PM
                     </TimelineOppositeContent>
                     <TimelineSeparator>
                     <TimelineConnector />
@@ -161,7 +160,7 @@ function Schedule() {
                     variant="body2"
                     color="text.secondary"
                     >
-                    6:00 PM - 10:30PM
+                    11:00 PM - 2:00 AM
                     </TimelineOppositeContent>
                     <TimelineSeparator>
                     <TimelineConnector />
@@ -175,7 +174,6 @@ function Schedule() {
                         After Party
                     </Typography>
                     <Typography>Join us for an after party at The Church Key</Typography>
-                    <Typography>After party is down the street, no shuttles provided</Typography>
                     <Typography>The Church Key</Typography>
                     <Typography>1337 14th St NW, Washington, DC 20005</Typography>
                     <div style={{marginLeft:'30px'}}>
