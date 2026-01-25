@@ -1,9 +1,9 @@
 import React, { useState, useRef, useEffect } from "react";
-import { TextField, Button, Box, Typography, Paper } from "@mui/material";
+import { TextField, Button, Box, Typography, Paper, CircularProgress } from "@mui/material";
 import SendIcon from '@mui/icons-material/Send';
 import './Chat.css';
 
-const Chat = ({ onNewMessage, messages }) => {
+const Chat = ({ onNewMessage, messages, isProcessing = false }) => {
     const [inputValue, setInputValue] = useState("");
     const messagesEndRef = useRef(null);
 
@@ -62,14 +62,16 @@ const Chat = ({ onNewMessage, messages }) => {
                             color="text.secondary" 
                             sx={{ textAlign: 'center', marginTop: '20px' }}
                         >
-                            Start chatting about activities in D.C.!
+                            Ask me anything about activities and things to do in Washington D.C.!
                             <br />
                             <br />
-                            Try mentioning places like:
+                            I'm your DC activities specialist. Try asking:
                             <br />
-                            "Washington Monument", "Lincoln Memorial", "National Mall",
+                            "What museums should I visit?", "What are the best monuments to see?",
                             <br />
-                            "Georgetown", "Smithsonian", "White House", or "Capitol Hill"
+                            "Where can I go shopping?", "What's good for dinner?",
+                            <br />
+                            "What activities are available?", or "Tell me about DC's neighborhoods"
                         </Typography>
                     ) : (
                         messages.map((message) => (
@@ -119,7 +121,7 @@ const Chat = ({ onNewMessage, messages }) => {
                         <TextField
                             fullWidth
                             variant="outlined"
-                            placeholder="Share an activity or location..."
+                            placeholder="Ask me about activities and things to do in D.C...."
                             value={inputValue}
                             onChange={(e) => setInputValue(e.target.value)}
                             onKeyPress={handleKeyPress}
@@ -133,16 +135,20 @@ const Chat = ({ onNewMessage, messages }) => {
                         <Button
                             variant="contained"
                             onClick={handleSend}
-                            endIcon={<SendIcon />}
+                            disabled={isProcessing}
+                            endIcon={isProcessing ? <CircularProgress size={16} color="inherit" /> : <SendIcon />}
                             sx={{
                                 backgroundColor: 'black',
                                 color: 'white',
                                 '&:hover': {
                                     backgroundColor: '#333'
+                                },
+                                '&:disabled': {
+                                    backgroundColor: '#666'
                                 }
                             }}
                         >
-                            Send
+                            {isProcessing ? 'Processing...' : 'Send'}
                         </Button>
                     </Box>
                 </Box>
