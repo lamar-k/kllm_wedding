@@ -1,9 +1,13 @@
 import React, { useState, useRef, useEffect } from "react";
-import { TextField, Button, Box, Typography, Paper, CircularProgress } from "@mui/material";
+import { TextField, Button, Box, Typography, Paper, CircularProgress, Chip } from "@mui/material";
 import SendIcon from '@mui/icons-material/Send';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
+import HotelIcon from '@mui/icons-material/Hotel';
+import RestaurantIcon from '@mui/icons-material/Restaurant';
+import ClearIcon from '@mui/icons-material/Clear';
 import './Chat.css';
 
-const Chat = ({ onNewMessage, messages, isProcessing = false }) => {
+const Chat = ({ onNewMessage, messages, isProcessing = false, predefinedLocations = [], startingLocation = null, onStartingLocationSelect = () => {} }) => {
     const [inputValue, setInputValue] = useState("");
     const messagesEndRef = useRef(null);
 
@@ -32,6 +36,15 @@ const Chat = ({ onNewMessage, messages, isProcessing = false }) => {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
             handleSend();
+        }
+    };
+
+    const handleLocationSelect = (location) => {
+        // Toggle selection: if clicking the same location, clear it
+        if (startingLocation && startingLocation.id === location.id) {
+            onStartingLocationSelect(null);
+        } else {
+            onStartingLocationSelect(location);
         }
     };
 
@@ -116,6 +129,55 @@ const Chat = ({ onNewMessage, messages, isProcessing = false }) => {
                     )}
                     <div ref={messagesEndRef} />
                 </Box>
+                
+                {/* Starting Location Selection */}
+                {predefinedLocations.length > 0 && (
+                    <Box sx={{ p: 2, pt: 1, borderTop: '1px solid #e0e0e0', backgroundColor: '#f5f5f5' }}>
+                        <Typography variant="caption" sx={{ color: 'black', fontWeight: 'bold', mb: 1, display: 'block' }}>
+                            Select Starting Location:
+                        </Typography>
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                            {predefinedLocations.map((location) => {
+                                const isSelected = startingLocation && startingLocation.id === location.id;
+                                const isVenue = location.type === 'venue';
+                                
+                                return (
+                                    <Chip
+                                        key={location.id}
+                                        icon={isVenue ? <RestaurantIcon /> : <HotelIcon />}
+                                        label={location.name}
+                                        onClick={() => handleLocationSelect(location)}
+                                        onDelete={isSelected ? () => onStartingLocationSelect(null) : undefined}
+                                        deleteIcon={isSelected ? <ClearIcon /> : undefined}
+                                        variant={isSelected ? "filled" : "outlined"}
+                                        color={isSelected ? "warning" : "default"}
+                                        sx={{
+                                            borderColor: isSelected ? '#fbc02d' : 'black',
+                                            color: isSelected ? 'white' : 'black',
+                                            backgroundColor: isSelected ? '#fbc02d' : 'white',
+                                            fontWeight: isSelected ? 'bold' : 'normal',
+                                            cursor: 'pointer',
+                                            '&:hover': {
+                                                backgroundColor: isSelected ? '#f9a825' : '#f5f5f5',
+                                                borderColor: isSelected ? '#f9a825' : '#333'
+                                            },
+                                            '& .MuiChip-icon': {
+                                                color: isSelected ? 'white' : 'black'
+                                            },
+                                            '& .MuiChip-deleteIcon': {
+                                                color: isSelected ? 'white' : 'black',
+                                                '&:hover': {
+                                                    color: isSelected ? '#f5f5f5' : '#666'
+                                                }
+                                            }
+                                        }}
+                                    />
+                                );
+                            })}
+                        </Box>
+                    </Box>
+                )}
+                
                 <Box sx={{ p: 2, borderTop: '1px solid #e0e0e0' }}>
                     <Box sx={{ display: 'flex', gap: 1 }}>
                         <TextField

@@ -7,45 +7,89 @@ import * as atlas from 'azure-maps-control';
 import 'azure-maps-control/dist/atlas.min.css';
 import './Map.css';
 
-const Map = ({ locations }) => {
+const Map = ({ locations, predefinedLocations = [], startingLocation = null }) => {
     const mapRef = useRef(null);
     const mapInstanceRef = useRef(null);
     const dataSourceRef = useRef(null);
+    const predefinedDataSourceRef = useRef(null);
     const drivingRouteDataSourceRef = useRef(null);
     const walkingRouteDataSourceRef = useRef(null);
     const isMapReadyRef = useRef(false);
     const [routeInfo, setRouteInfo] = useState(null);
     const [loadingRoutes, setLoadingRoutes] = useState(false);
 
-    const updateMarkers = useCallback((map, dataSource, locs) => {
+    const updateMarkers = useCallback((map, dataSource, predefinedDataSource, locs, predefinedLocs, startingLoc) => {
+        // Clear existing markers
         dataSource.clear();
+        predefinedDataSource.clear();
 
-        if (locs.length === 0) {
-            map.setCamera({
-                center: [-77.0369, 38.9072],
-                zoom: 12
-            });
-            return;
-        }
+        // Add predefined locations (venues and hotels)
+        predefinedLocs.forEach((location) => {
+            const isStarting = startingLoc && startingLoc.id === location.id;
+            const point = new atlas.Shape(
+                new atlas.data.Point([location.lng, location.lat]),
+                location.id.toString(),
+                {
+                    title: location.name,
+                    description: location.address,
+                    locationType: location.type,
+                    isStarting: isStarting
+                }
+            );
+            predefinedDataSource.add([point]);
+        });
 
+        // Add chat-extracted locations
         locs.forEach((location) => {
             const point = new atlas.Shape(
                 new atlas.data.Point([location.lng, location.lat]),
                 location.id.toString(),
                 {
                     title: location.name,
-                    description: `Added by ${location.addedBy}`
+                    description: `Added by ${location.addedBy}`,
+                    locationType: 'extracted',
+                    isStarting: false
                 }
             );
             dataSource.add([point]);
         });
 
-        const existingLayer = map.layers.getLayers().find(layer => layer instanceof atlas.layer.SymbolLayer);
-        if (existingLayer) {
-            map.layers.remove(existingLayer);
-        }
+        // Remove existing symbol layers
+        const existingLayers = map.layers.getLayers().filter(layer => 
+            layer instanceof atlas.layer.SymbolLayer && 
+            (layer.getId() === 'predefined-layer' || layer.getId() === 'extracted-layer' || !layer.getId())
+        );
+        existingLayers.forEach(layer => map.layers.remove(layer));
 
-        const symbolLayer = new atlas.layer.SymbolLayer(dataSource, null, {
+        // Add layer for predefined locations with conditional styling
+        const predefinedLayer = new atlas.layer.SymbolLayer(predefinedDataSource, 'predefined-layer', {
+            textOptions: {
+                textField: ['get', 'title'],
+                offset: [0, -2],
+                color: 'black',
+                haloColor: 'white',
+                haloWidth: 2,
+                size: 12
+            },
+            iconOptions: {
+                image: [
+                    'case',
+                    ['get', 'isStarting'], 'pin-round-yellow',  // Starting location
+                    ['==', ['get', 'locationType'], 'venue'], 'pin-round-red',  // Venues
+                    'pin-round-darkblue'  // Hotels
+                ],
+                anchor: 'center',
+                size: [
+                    'case',
+                    ['get', 'isStarting'], 1.2,  // Make starting location larger
+                    1.0
+                ]
+            }
+        });
+        map.layers.add(predefinedLayer);
+
+        // Add layer for chat-extracted locations
+        const extractedLayer = new atlas.layer.SymbolLayer(dataSource, 'extracted-layer', {
             textOptions: {
                 textField: ['get', 'title'],
                 offset: [0, -2],
@@ -58,17 +102,19 @@ const Map = ({ locations }) => {
                 anchor: 'center'
             }
         });
-        map.layers.add(symbolLayer);
+        map.layers.add(extractedLayer);
 
-        if (locs.length > 0) {
-            if (locs.length === 1) {
+        // Set camera to fit all locations
+        const allLocations = [...predefinedLocs, ...locs];
+        if (allLocations.length > 0) {
+            if (allLocations.length === 1) {
                 map.setCamera({
-                    center: [locs[0].lng, locs[0].lat],
+                    center: [allLocations[0].lng, allLocations[0].lat],
                     zoom: 14
                 });
             } else {
-                const lngs = locs.map(loc => loc.lng);
-                const lats = locs.map(loc => loc.lat);
+                const lngs = allLocations.map(loc => loc.lng);
+                const lats = allLocations.map(loc => loc.lat);
                 const minLng = Math.min(...lngs);
                 const maxLng = Math.max(...lngs);
                 const minLat = Math.min(...lats);
@@ -81,9 +127,14 @@ const Map = ({ locations }) => {
                 
                 map.setCamera({
                     bounds: bounds,
-                    padding: 50
+                    padding: 80
                 });
             }
+        } else {
+            map.setCamera({
+                center: [-77.0369, 38.9072],
+                zoom: 12
+            });
         }
     }, []);
     useEffect(() => {
@@ -108,9 +159,16 @@ const Map = ({ locations }) => {
 
         map.events.add('ready', () => {
             isMapReadyRef.current = true;
+            
+            // Data source for chat-extracted locations
             const dataSource = new atlas.source.DataSource();
             map.sources.add(dataSource);
             dataSourceRef.current = dataSource;
+
+            // Data source for predefined locations (venues and hotels)
+            const predefinedDataSource = new atlas.source.DataSource();
+            map.sources.add(predefinedDataSource);
+            predefinedDataSourceRef.current = predefinedDataSource;
 
             const drivingRouteDataSource = new atlas.source.DataSource();
             map.sources.add(drivingRouteDataSource);
@@ -120,9 +178,8 @@ const Map = ({ locations }) => {
             map.sources.add(walkingRouteDataSource);
             walkingRouteDataSourceRef.current = walkingRouteDataSource;
 
-            if (locations.length > 0) {
-                updateMarkers(map, dataSource, locations);
-            }
+            // Initial marker update - always show predefined locations
+            updateMarkers(map, dataSource, predefinedDataSource, [], predefinedLocations, startingLocation);
         });
 
         return () => {
@@ -130,10 +187,11 @@ const Map = ({ locations }) => {
                 mapInstanceRef.current.dispose();
                 mapInstanceRef.current = null;
                 dataSourceRef.current = null;
+                predefinedDataSourceRef.current = null;
                 isMapReadyRef.current = false;
             }
         };
-    }, [updateMarkers]); 
+    }, [predefinedLocations, startingLocation, updateMarkers]); 
 
     const calculateRoutes = useCallback(async (locs) => {
         if (locs.length < 2) {
@@ -332,18 +390,27 @@ const Map = ({ locations }) => {
     }, []);
 
     useEffect(() => {
-        if (!isMapReadyRef.current || !mapInstanceRef.current || !dataSourceRef.current) {
+        if (!isMapReadyRef.current || !mapInstanceRef.current || !dataSourceRef.current || !predefinedDataSourceRef.current) {
             return;
         }
 
-        updateMarkers(mapInstanceRef.current, dataSourceRef.current, locations);
+        updateMarkers(mapInstanceRef.current, dataSourceRef.current, predefinedDataSourceRef.current, locations, predefinedLocations, startingLocation);
         
-        if (locations.length >= 2) {
-            calculateRoutes(locations);
+        // Combine starting location with other locations for route calculation
+        let routeLocations = [...locations];
+        if (startingLocation && routeLocations.length > 0) {
+            // Remove starting location if it exists in the locations array
+            routeLocations = routeLocations.filter(loc => loc.name !== startingLocation.name);
+            // Add starting location at the beginning
+            routeLocations = [startingLocation, ...routeLocations];
+        }
+        
+        if (routeLocations.length >= 2) {
+            calculateRoutes(routeLocations);
         } else {
             setRouteInfo(null);
         }
-    }, [locations, updateMarkers, calculateRoutes]);
+    }, [locations, predefinedLocations, startingLocation, updateMarkers, calculateRoutes]);
 
     return (
         <div className="map-container">
@@ -414,6 +481,13 @@ const Map = ({ locations }) => {
                         </Box>
                     ) : routeInfo ? (
                         <Box>
+                            {startingLocation && (
+                                <Paper elevation={1} sx={{ p: 1.5, mb: 2, backgroundColor: '#fff9c4', borderLeft: '4px solid #fbc02d' }}>
+                                    <Typography variant="body2" sx={{ fontWeight: 'bold', color: 'black' }}>
+                                        🎯 Starting from: {startingLocation.name}
+                                    </Typography>
+                                </Paper>
+                            )}
                             <Paper elevation={1} sx={{ p: 2, mb: 2, backgroundColor: '#f5f5f5' }}>
                                 <Typography variant="subtitle2" sx={{ marginBottom: '8px', color: 'black' }}>
                                     Total Travel Time:
@@ -439,7 +513,7 @@ const Map = ({ locations }) => {
                             {routeInfo.segments.map((segment, index) => (
                                 <Paper key={index} elevation={1} sx={{ p: 1.5, mb: 1 }}>
                                     <Typography variant="body2" sx={{ fontWeight: 'bold', marginBottom: '4px' }}>
-                                        {segment.from} → {segment.to}
+                                        {index === 0 && startingLocation ? '🎯 ' : ''}{segment.from} → {segment.to}
                                     </Typography>
                                     <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
                                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
