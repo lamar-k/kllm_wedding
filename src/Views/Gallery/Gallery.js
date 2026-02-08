@@ -1,35 +1,8 @@
-import React, {useEffect, useMemo, useState} from "react";
+import React, {useEffect, useState} from "react";
 import {ContainerClient } from "@azure/storage-blob";
 import Navigation from "../../Components/Navigation/Navigation";
 
 const Gallery = () => {
-
-    // Set to true to use mock data, false to fetch from Azure
-    const mock_data = true;
-
-    const account = process.env.REACT_APP_AZURE_STORAGE_ACCOUNT;
-    const containerName = process.env.REACT_APP_AZURE_STORAGE_CONTAINER;
-    const manifest_file = "manifest_images.json";
-
-    const containerUrl = useMemo(() => 
-        `https://${account}.blob.core.windows.net/${containerName}`,
-    [account, containerName]
-    );
-
-    // Mock images for preview with varying sizes
-    const mockImages = [
-        { name: "wedding-1.jpg", alt: "Beautiful wedding ceremony", width: 300, height: 400 },
-        { name: "wedding-2.jpg", alt: "Bride and groom", width: 300, height: 200 },
-        { name: "wedding-3.jpg", alt: "Wedding reception", width: 300, height: 300 },
-        { name: "wedding-4.jpg", alt: "Wedding cake", width: 300, height: 250 },
-        { name: "wedding-5.jpg", alt: "First dance", width: 300, height: 450 },
-        { name: "wedding-6.jpg", alt: "Wedding party", width: 300, height: 180 },
-        { name: "wedding-7.jpg", alt: "Bouquet toss", width: 300, height: 350 },
-        { name: "wedding-8.jpg", alt: "Wedding decorations", width: 300, height: 220 },
-        { name: "wedding-9.jpg", alt: "Wedding venue", width: 300, height: 280 },
-        { name: "wedding-10.jpg", alt: "Wedding celebration", width: 300, height: 320 },
-        { name: "wedding-11.jpg", alt: "Wedding moments", width: 300, height: 200 },
-    ];
 
     const [images, setImages] = useState([]);
     const [error, setError] = useState(null);
@@ -38,60 +11,110 @@ const Gallery = () => {
     useEffect(() => {
         let cancelled = false;
         
-        if (mock_data) {
-            // Using mock images for preview
-            setLoading(true);
-            setTimeout(() => {
+        (async () => {
+            try{
+                setLoading(true);
+                setError(null);
+                
+                const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:8000";
+                const tokenResponse = await fetch(`${apiUrl}/api/gallery/sas-token`);
+                
+                if(!tokenResponse.ok) {
+                    throw new Error(`Failed to get SAS token: ${tokenResponse.status}`);
+                }
+                
+                const { containerUrl, sasToken } = await tokenResponse.json();
+                
+                const containerClient = new ContainerClient(`${containerUrl}?${sasToken}`);
+                const blobs = [];
+                
+                for await (const blob of containerClient.listBlobsFlat()) {
+                    if (/\.(jpg|jpeg|png|gif|webp)$/i.test(blob.name) && !blob.name.includes("Tezza-8936.JPG")) {
+                        blobs.push({
+                            name: blob.name,
+                            url: `${containerUrl}/${encodeURIComponent(blob.name)}?${sasToken}`,
+                            alt: blob.name.split("/").pop().replace(/\.[^/.]+$/, "")
+                        });
+                    }
+                }
+                
                 if(!cancelled) {
-                    setImages(mockImages);
+                    setImages(blobs);
+                }
+            }
+            catch(err) {
+                if(!cancelled) {
+                    setError(err.message || "Failed to load images");
+                    console.error("Gallery error:", err);
+                }
+            }
+            finally {
+                if(!cancelled) {
                     setLoading(false);
                 }
-            }, 500); // Simulate loading delay
-        } else {
-            // Fetch from Azure storage
-            (async () => {
-                try{
-                    setLoading(true);
-                    setError("");
-                    const res = await fetch(`${containerUrl}/${manifest_file}`);
-                    if(!res.ok) {
-                        throw new Error(`HTTP error! status: ${res.status}`);
-                    }
-                    const data = await res.json();
-                    const normalizedImages = (Array.isArray(data) ? data:[])
-                    .map(it => (typeof it === 'string' ? {name: it} : it))
-                    .filter(it => it?.name && /\.(jpg|jpeg|png|gif)$/i.test(it.name));
-                    if(!cancelled) {
-                        setImages(normalizedImages);
-                    }
-                }
-                catch(err) {
-                    if(!cancelled) {
-                        setError(err.message || "Failed to load images");
-                    }
-                }
-                finally {
-                    if(!cancelled) {
-                        setLoading(false);
-                    }
-                }
-            })();
-        }
+            }
+        })();
         
         return () => {
             cancelled = true;
         };
-    }, [containerUrl, manifest_file, mock_data]);
+    }, []);
 
     if (loading) {
-        return <div style={{justifyContent:'center', alignItems:'center', marginTop:'50%'}}>Loading...</div>;
-    } 
-if (error) {
-        return <div>Error: {error}</div>;
+        return (
+            <div>
+                <Navigation />
+                <div style={{
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    minHeight: '60vh',
+                    fontSize: '18px'
+                }}>
+                    Loading gallery...
+                </div>
+            </div>
+        );
     }
+    
+    if (error) {
+        return (
+            <div>
+                <Navigation />
+                <div style={{
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    minHeight: '60vh',
+                    fontSize: '18px',
+                    color: '#d32f2f',
+                    flexDirection: 'column',
+                    gap: '10px'
+                }}>
+                    <div>Error loading gallery</div>
+                    <div style={{fontSize: '14px', color: '#666'}}>{error}</div>
+                </div>
+            </div>
+        );
+    }
+    
     if (images.length === 0) {
-        return <div>No images found.</div>;
+        return (
+            <div>
+                <Navigation />
+                <div style={{
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    minHeight: '60vh',
+                    fontSize: '18px'
+                }}>
+                    No images found in gallery.
+                </div>
+            </div>
+        );
     }
+    
     return(
         <div>
             <Navigation />
@@ -111,20 +134,14 @@ if (error) {
                   gap: 12,
                 }}
               >
-                {images.map((it, index) => {
-                  // Use placeholder images for mock data, Azure URL for real data
-                  const imageWidth = it.width || 300;
-                  const imageHeight = it.height || 180;
-                  const aspectRatio = imageHeight / imageWidth;
-                  const rowSpan = Math.ceil((imageHeight + 12) / 10); // 12px gap, 10px row height
+                {images.map((image, index) => {
+                  const imageWidth = 300;
+                  const imageHeight = 300;
+                  const rowSpan = Math.ceil((imageHeight + 12) / 10);
                   
-                  const url = mock_data 
-                    ? `https://picsum.photos/seed/${it.name}/${imageWidth}/${imageHeight}`
-                    : `${containerUrl}/${encodeURI(it.name)}`;
-                  const label = it.alt || it.caption || it.name.split("/").pop();
                   return (
                     <figure 
-                      key={it.name} 
+                      key={image.name} 
                       style={{ 
                         margin: 0,
                         gridRowEnd: `span ${rowSpan}`,
@@ -135,8 +152,8 @@ if (error) {
                       }}
                     >
                       <img
-                        src={url}
-                        alt={label}
+                        src={image.url}
+                        alt={image.alt}
                         loading="lazy"
                         style={{ 
                           width: "100%", 

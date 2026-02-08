@@ -1,9 +1,8 @@
-import React, {useState} from "react";
+import React, {useState, useEffect} from "react";
 import './Home.css';
 import '../../Components/Countdown/Countdown.js';
 import Countdown from "../../Components/Countdown/Countdown.js";
 import Navigation from '../../Components/Navigation/Navigation.js';
-import LKIMAGE from "../../images/LK_HOME.png";
 import {Button, Typography, Modal, Box, TextField, IconButton, InputAdornment} from "@mui/material";
 import CloseIcon from '@mui/icons-material/Close';
 import SearchIcon from '@mui/icons-material/Search';
@@ -16,6 +15,33 @@ function Home() {
 
     const [modalHeight, setModalHeight] = useState(window.innerHeight * 0.2);
     const [modalWidth, setModalWidth] = useState(window.innerWidth * 0.2);
+    
+    const [heroImage, setHeroImage] = useState(null);
+    const [imageLoading, setImageLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchHeroImage = async () => {
+            try {
+                setImageLoading(true);
+                
+                const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:8000";
+                const tokenResponse = await fetch(`${apiUrl}/api/gallery/sas-token`);
+                
+                if (tokenResponse.ok) {
+                    const { containerUrl, sasToken } = await tokenResponse.json();
+                    
+                    const imageUrl = `${containerUrl}/Tezza-8936.JPG?${sasToken}`;
+                    setHeroImage(imageUrl);
+                }
+            } catch (err) {
+                console.error("Failed to load hero image:", err);
+            } finally {
+                setImageLoading(false);
+            }
+        };
+        
+        fetchHeroImage();
+    }, []);
 
     return (
         <div className="home">
@@ -79,9 +105,19 @@ function Home() {
             <Navigation/>
 
             <div style={{display:'flex', justifyContent:'center',  marginTop:'20px'}}>
-            <img src={LKIMAGE} alt="LK Wedding Photo" className="LK"
-                style={{display:'flex', width:'90%', maxHeight:'70vh', objectFit:'contain', marginBottom:'10px', marginTop:'10px'}} 
-                />
+                {imageLoading ? (
+                    <div style={{height: '70vh', display: 'flex', alignItems: 'center', fontSize: '16px', color: '#666'}}>
+                        Loading...
+                    </div>
+                ) : heroImage ? (
+                    <img src={heroImage} alt="LK Wedding Photo" className="LK"
+                        style={{display:'flex', width:'90%', maxHeight:'70vh', objectFit:'contain', marginBottom:'10px', marginTop:'10px'}} 
+                    />
+                ) : (
+                    <div style={{height: '70vh', display: 'flex', alignItems: 'center', fontSize: '16px', color: '#666'}}>
+                        Image unavailable
+                    </div>
+                )}
             </div>
 
         </div>
