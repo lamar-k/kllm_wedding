@@ -24,7 +24,7 @@ function Home() {
             try {
                 setImageLoading(true);
                 
-                const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:8000";
+                const apiUrl = process.env.REACT_APP_BACKEND_URL || "http://localhost:8000";
                 const tokenResponse = await fetch(`${apiUrl}/api/gallery/sas-token`);
                 
                 if (tokenResponse.ok) {
