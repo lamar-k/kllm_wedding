@@ -1,32 +1,84 @@
-import React, {useState, useEffect} from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import './Home.css';
 import '../../Components/Countdown/Countdown.js';
 import Countdown from "../../Components/Countdown/Countdown.js";
 import Navigation from '../../Components/Navigation/Navigation.js';
-import {Button, Typography, Modal, Box, TextField, IconButton, InputAdornment} from "@mui/material";
+import { Button, Typography, Modal, Box, TextField, InputAdornment, List, ListItem, ListItemButton, ListItemText, CircularProgress } from "@mui/material";
 import CloseIcon from '@mui/icons-material/Close';
 import SearchIcon from '@mui/icons-material/Search';
 
+const API_URL = process.env.REACT_APP_BACKEND_URL || "http://localhost:8000";
+const SEARCH_DEBOUNCE_MS = 300;
+const MIN_SEARCH_LENGTH = 2;
 
 function Home() {
     const [rsvpOpen, setRsvpOpen] = useState(false);
-    const handleRSVPOpen = () => setRsvpOpen(true);
+    const handleRSVPOpen = () => {
+        setRsvpOpen(true);
+        setModalStep('search');
+        setSearchTerm('');
+        setSearchResults([]);
+        setGuestGroup(null);
+    };
     const handleRSVPClose = () => setRsvpOpen(false);
+
+    const [searchTerm, setSearchTerm] = useState('');
+    const [searchResults, setSearchResults] = useState([]);
+    const [searchLoading, setSearchLoading] = useState(false);
+    const [guestGroup, setGuestGroup] = useState(null);
+    const [modalStep, setModalStep] = useState('search'); // 'search' | 'group'
 
     const [heroImage, setHeroImage] = useState(null);
     const [imageLoading, setImageLoading] = useState(true);
+
+    // Debounced guest search
+    useEffect(() => {
+        if (!searchTerm || searchTerm.trim().length < MIN_SEARCH_LENGTH) {
+            setSearchResults([]);
+            return;
+        }
+        const timer = setTimeout(async () => {
+            setSearchLoading(true);
+            try {
+                const res = await fetch(
+                    `${API_URL}/api/guests/search?name=${encodeURIComponent(searchTerm.trim())}`
+                );
+                if (res.ok) {
+                    const data = await res.json();
+                    setSearchResults(data);
+                } else {
+                    setSearchResults([]);
+                }
+            } catch (err) {
+                console.error("Guest search failed:", err);
+                setSearchResults([]);
+            } finally {
+                setSearchLoading(false);
+            }
+        }, SEARCH_DEBOUNCE_MS);
+        return () => clearTimeout(timer);
+    }, [searchTerm]);
+
+    const handleSelectGuest = useCallback(async (guestId) => {
+        try {
+            const res = await fetch(`${API_URL}/api/guests/${guestId}/group`);
+            if (res.ok) {
+                const data = await res.json();
+                setGuestGroup(data);
+                setModalStep('group');
+            }
+        } catch (err) {
+            console.error("Failed to load guest group:", err);
+        }
+    }, []);
 
     useEffect(() => {
         const fetchHeroImage = async () => {
             try {
                 setImageLoading(true);
-                
-                const apiUrl = process.env.REACT_APP_BACKEND_URL || "http://localhost:8000";
-                const tokenResponse = await fetch(`${apiUrl}/api/gallery/sas-token`);
-                
+                const tokenResponse = await fetch(`${API_URL}/api/gallery/sas-token`);
                 if (tokenResponse.ok) {
                     const { containerUrl, sasToken } = await tokenResponse.json();
-                    
                     const imageUrl = `${containerUrl}/Tezza-8936.JPG?${sasToken}`;
                     setHeroImage(imageUrl);
                 }
@@ -36,7 +88,6 @@ function Home() {
                 setImageLoading(false);
             }
         };
-        
         fetchHeroImage();
     }, []);
 
@@ -74,29 +125,77 @@ function Home() {
                     p: 4,
                     overflow: 'auto',
                 }}>
-                    <div style={{flex:1, justifyContent:'right', textAlign:'right'}}>
-                        <CloseIcon onClick={handleRSVPClose} sx={{'&:hover': {cursor:'pointer'}}}/>
+                    <div style={{ flex: 1, justifyContent: 'right', textAlign: 'right' }}>
+                        <CloseIcon onClick={handleRSVPClose} sx={{ '&:hover': { cursor: 'pointer' } }} />
                     </div>
-                    <div style={{flex:1, justifyContent:'center', textAlign:'center', marginTop:'25px'}}>
-                    <Typography id="modal-modal-title" variant="h6" component="h2">
-                        RSVP by searching your full name:
-                    </Typography>
-                    <TextField label="Search Full Name"
-            variant="standard"
-            // value={searchTerm}
-            // onChange={handleChange}
-            fullWidth
-            InputProps={{
-              endAdornment: (
-                <InputAdornment position="end">
-                  <IconButton type="submit" aria-label="search">
-                    <SearchIcon />
-                  </IconButton>
-                </InputAdornment>
-              ),
-            }}
-            style={{marginTop:'25px'}}/>
-                    </div>
+                    {modalStep === 'search' && (
+                        <div style={{ flex: 1, marginTop: '25px' }}>
+                            <Typography id="modal-modal-title" variant="h6" component="h2" sx={{ textAlign: 'center' }}>
+                                RSVP by searching your full name:
+                            </Typography>
+                            <TextField
+                                label="Search Full Name"
+                                variant="standard"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                fullWidth
+                                autoFocus
+                                InputProps={{
+                                    endAdornment: (
+                                        <InputAdornment position="end">
+                                            {searchLoading ? (
+                                                <CircularProgress size={24} />
+                                            ) : (
+                                                <SearchIcon sx={{ color: 'action.disabled' }} />
+                                            )}
+                                        </InputAdornment>
+                                    ),
+                                }}
+                                style={{ marginTop: '25px' }}
+                            />
+                            {searchTerm.trim().length >= MIN_SEARCH_LENGTH && (
+                                <List dense sx={{ mt: 1, maxHeight: 200, overflow: 'auto' }}>
+                                    {searchResults.length === 0 && !searchLoading && (
+                                        <Typography variant="body2" color="text.secondary" sx={{ px: 2, py: 2 }}>
+                                            No guests found
+                                        </Typography>
+                                    )}
+                                    {searchResults.map((guest) => (
+                                        <ListItemButton
+                                            key={guest.id}
+                                            onClick={() => handleSelectGuest(guest.id)}
+                                        >
+                                            <ListItemText primary={guest.name} />
+                                        </ListItemButton>
+                                    ))}
+                                </List>
+                            )}
+                        </div>
+                    )}
+                    {modalStep === 'group' && guestGroup && (
+                        <div style={{ flex: 1, marginTop: '25px' }}>
+                            <Typography variant="h6" sx={{ textAlign: 'center', mb: 2 }}>
+                                Your party
+                            </Typography>
+                            <List dense>
+                                <ListItem>
+                                    <ListItemText primary={guestGroup.primary.name} secondary="You" />
+                                </ListItem>
+                                {guestGroup.accompanied.map((g) => (
+                                    <ListItem key={g.id}>
+                                        <ListItemText primary={g.name} />
+                                    </ListItem>
+                                ))}
+                            </List>
+                            <Button
+                                variant="outlined"
+                                onClick={() => setModalStep('search')}
+                                sx={{ mt: 2, display: 'block', mx: 'auto' }}
+                            >
+                                Back to search
+                            </Button>
+                        </div>
+                    )}
                 </Box>
             </Modal>
 
