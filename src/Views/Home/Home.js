@@ -13,9 +13,6 @@ function Home() {
     const handleRSVPOpen = () => setRsvpOpen(true);
     const handleRSVPClose = () => setRsvpOpen(false);
 
-    const [modalHeight, setModalHeight] = useState(window.innerHeight * 0.2);
-    const [modalWidth, setModalWidth] = useState(window.innerWidth * 0.2);
-    
     const [heroImage, setHeroImage] = useState(null);
     const [imageLoading, setImageLoading] = useState(true);
 
@@ -70,11 +67,12 @@ function Home() {
                     top: '50%',
                     left: '50%',
                     transform: 'translate(-50%, -50%)',
-                    width: modalWidth,
-                    height: modalHeight,
+                    width: '90vw',
+                    maxWidth: 500,
                     bgcolor: 'background.paper',
                     boxShadow: 24,
                     p: 4,
+                    overflow: 'auto',
                 }}>
                     <div style={{flex:1, justifyContent:'right', textAlign:'right'}}>
                         <CloseIcon onClick={handleRSVPClose} sx={{'&:hover': {cursor:'pointer'}}}/>
@@ -84,7 +82,7 @@ function Home() {
                         RSVP by searching your full name:
                     </Typography>
                     <TextField label="Search Full Name"
-            variant="outlined"
+            variant="standard"
             // value={searchTerm}
             // onChange={handleChange}
             fullWidth
