@@ -164,8 +164,15 @@ function Home() {
                                         <ListItemButton
                                             key={guest.id}
                                             onClick={() => handleSelectGuest(guest.id)}
+                                            sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
                                         >
-                                            <ListItemText primary={guest.name} />
+                                            <ListItemText primary={guest.name} sx={{ flex: '0 1 auto' }} />
+                                            <Typography
+                                                variant="body2"
+                                                sx={{ color: guest.response_submitted ? 'green' : 'red', whiteSpace: 'nowrap', ml: 2 }}
+                                            >
+                                                {guest.response_submitted ? "RSVP Complete" : "RSVP Incomplete"}
+                                            </Typography>
                                         </ListItemButton>
                                     ))}
                                 </List>
@@ -179,11 +186,19 @@ function Home() {
                             </Typography>
                             <List dense>
                                 <ListItem>
-                                    <ListItemText primary={guestGroup.primary.name} secondary="You" />
+                                    <ListItemText
+                                        primary={guestGroup.primary.name}
+                                        secondary={guestGroup.primary.response_submitted ? "RSVP Complete" : "RSVP Incomplete"}
+                                        secondaryTypographyProps={{ sx: { color: guestGroup.primary.response_submitted ? 'green' : 'red' } }}
+                                    />
                                 </ListItem>
                                 {guestGroup.accompanied.map((g) => (
                                     <ListItem key={g.id}>
-                                        <ListItemText primary={g.name} />
+                                        <ListItemText
+                                            primary={g.name}
+                                            secondary={g.response_submitted ? "RSVP Complete" : "RSVP Incomplete"}
+                                            secondaryTypographyProps={{ sx: { color: g.response_submitted ? 'green' : 'red' } }}
+                                        />
                                     </ListItem>
                                 ))}
                             </List>
