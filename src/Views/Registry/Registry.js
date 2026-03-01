@@ -16,7 +16,7 @@ import {
     Alert
 } from "@mui/material";
 import CloseIcon from '@mui/icons-material/Close';
-import FavoriteIcon from '@mui/icons-material/Favorite';
+import HomeIcon from '@mui/icons-material/Home';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { loadStripe } from '@stripe/stripe-js';
@@ -126,7 +126,7 @@ function CheckoutForm({ amount, contributorName, onSuccess, onError }) {
 }
 
 const Registry = () => {
-    const [honeymoonModalOpen, setHoneymoonModalOpen] = useState(false);
+    const [houseModalOpen, setHouseModalOpen] = useState(false);
     const [contributionAmount, setContributionAmount] = useState('');
     const [contributorName, setContributorName] = useState('');
     const [purchasedItems, setPurchasedItems] = useState(new Set());
@@ -156,16 +156,16 @@ const Registry = () => {
         setErrorMessage(message);
     };
 
-    const handleHoneymoonModalOpen = () => {
+    const handleHouseModalOpen = () => {
         setModalStep('form');
         setContributionAmount('');
         setContributorName('');
         setErrorMessage('');
-        setHoneymoonModalOpen(true);
+        setHouseModalOpen(true);
     };
 
-    const handleHoneymoonModalClose = () => {
-        setHoneymoonModalOpen(false);
+    const handleHouseModalClose = () => {
+        setHouseModalOpen(false);
     };
 
     const renderModalContent = () => {
@@ -177,11 +177,11 @@ const Registry = () => {
                         Thank You, {contributorName}!
                     </Typography>
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                        Your contribution of ${parseFloat(contributionAmount).toFixed(2)} to our honeymoon fund has been received. We truly appreciate your generosity!
+                        Your contribution of ${parseFloat(contributionAmount).toFixed(2)} to our house fund has been received. We truly appreciate your generosity!
                     </Typography>
                     <Button
                         variant="contained"
-                        onClick={handleHoneymoonModalClose}
+                        onClick={handleHouseModalClose}
                         sx={blackButtonSx}
                     >
                         Close
@@ -219,8 +219,8 @@ const Registry = () => {
         // Default: 'form' step
         return (
             <>
-                <Typography id="honeymoon-modal-title" variant="h6" component="h2" sx={{ marginBottom: '20px', textAlign: 'center' }}>
-                    Contribute to Our Honeymoon Fund
+                <Typography id="house-modal-title" variant="h6" component="h2" sx={{ marginBottom: '20px', textAlign: 'center' }}>
+                    Contribute to Our House Fund
                 </Typography>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                     <TextField
@@ -270,10 +270,10 @@ const Registry = () => {
                 
                 <Typography variant="body1" sx={{ marginBottom: '40px', textAlign: 'center', maxWidth: '800px', margin: '0 auto 40px' }}>
                     We're so grateful for your love and support! Below are some items we'd love to have in our new home together. 
-                    You can also contribute to our honeymoon fund if you prefer.
+                    You can also contribute to our house fund if you prefer.
                 </Typography>
 
-                {/* Honeymoon Fund Section */}
+                {/* House Fund Section */}
                 <Box 
                     sx={{ 
                         marginBottom: '60px',
@@ -285,19 +285,19 @@ const Registry = () => {
                         textAlign: 'center'
                     }}
                 >
-                    <FavoriteIcon sx={{ fontSize: 50, color: '#d32f2f', marginBottom: '10px' }} />
+                    <HomeIcon sx={{ fontSize: 50, color: '#1976d2', marginBottom: '10px' }} />
                     <Typography variant="h5" sx={{ marginBottom: '15px' }}>
-                        Honeymoon Fund
+                        House Fund
                     </Typography>
                     <Typography variant="body2" sx={{ marginBottom: '20px', color: '#666' }}>
-                        Help us create unforgettable memories on our honeymoon! Any contribution is greatly appreciated.
+                        Help us build our dream home! Any contribution is greatly appreciated.
                     </Typography>
                     <Button 
                         variant="contained" 
-                        onClick={handleHoneymoonModalOpen}
+                        onClick={handleHouseModalOpen}
                         sx={blackButtonSx}
                     >
-                        Contribute to Honeymoon Fund
+                        Contribute to House Fund
                     </Button>
                 </Box>
 
@@ -378,12 +378,12 @@ const Registry = () => {
                 </Grid>
             </div>
 
-            {/* Honeymoon Fund Modal */}
+            {/* House Fund Modal */}
             <Modal
-                open={honeymoonModalOpen}
-                onClose={handleHoneymoonModalClose}
-                aria-labelledby="honeymoon-modal-title"
-                aria-describedby="honeymoon-modal-description"
+                open={houseModalOpen}
+                onClose={handleHouseModalClose}
+                aria-labelledby="house-modal-title"
+                aria-describedby="house-modal-description"
                 style={{ backdropFilter: "blur(5px)" }}
             >
                 <Box sx={{
@@ -398,7 +398,7 @@ const Registry = () => {
                     borderRadius: '8px'
                 }}>
                     <div style={{ display: 'flex', justifyContent: 'right', marginBottom: '10px' }}>
-                        <IconButton onClick={handleHoneymoonModalClose} sx={{ '&:hover': { cursor: 'pointer' } }}>
+                        <IconButton onClick={handleHouseModalClose} sx={{ '&:hover': { cursor: 'pointer' } }}>
                             <CloseIcon />
                         </IconButton>
                     </div>
