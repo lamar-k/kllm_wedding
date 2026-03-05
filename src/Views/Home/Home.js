@@ -3,13 +3,23 @@ import './Home.css';
 import '../../Components/Countdown/Countdown.js';
 import Countdown from "../../Components/Countdown/Countdown.js";
 import Navigation from '../../Components/Navigation/Navigation.js';
-import { Button, Typography, Modal, Box, TextField, InputAdornment, List, ListItem, ListItemButton, ListItemText, CircularProgress, Divider, MenuItem, Select, Grow } from "@mui/material";
+import { Button, Typography, Modal, Box, TextField, InputAdornment, List, ListItemButton, ListItemText, CircularProgress, Grow } from "@mui/material";
 import CloseIcon from '@mui/icons-material/Close';
 import SearchIcon from '@mui/icons-material/Search';
+import seasideImg from '../../images/seaside.jpg';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL || "http://localhost:8000";
 const SEARCH_DEBOUNCE_MS = 300;
 const MIN_SEARCH_LENGTH = 2;
+
+const STATUS_ACCEPTED = 'accepted';
+const STATUS_DECLINED = 'declined';
+const STEP_LABELS = ['Wedding — June 13', 'Welcome Party — June 12', 'Dietary restrictions (optional)'];
+
+const isRsvpComplete = (guest) =>
+    guest.response_submitted &&
+    guest.wedding_accepted_status &&
+    guest.welcome_drinks_accepted_status;
 
 function Home() {
     const [rsvpOpen, setRsvpOpen] = useState(false);
@@ -19,6 +29,8 @@ function Home() {
         setSearchTerm('');
         setSearchResults([]);
         setGuestGroup(null);
+        setRsvpStep(0);
+        setIsEditing(false);
     };
     const handleRSVPClose = () => setRsvpOpen(false);
 
@@ -28,7 +40,8 @@ function Home() {
     const [guestGroup, setGuestGroup] = useState(null);
     const [modalStep, setModalStep] = useState('search'); // 'search' | 'group' | 'success'
     const [rsvpFormData, setRsvpFormData] = useState({});
-    const [formTouched, setFormTouched] = useState({});
+    const [rsvpStep, setRsvpStep] = useState(0); // 0=wedding, 1=welcome, 2=allergies
+    const [isEditing, setIsEditing] = useState(false);
     const [submitLoading, setSubmitLoading] = useState(false);
 
     const [heroImage, setHeroImage] = useState(null);
@@ -74,11 +87,14 @@ function Home() {
                     formData[g.id] = {
                         wedding_accepted: g.wedding_accepted ?? 0,
                         welcome_drinks_accepted: g.welcome_drinks_accepted ?? 0,
+                        wedding_accepted_status: g.wedding_accepted_status ?? null,
+                        welcome_drinks_accepted_status: g.welcome_drinks_accepted_status ?? null,
                         allergies: (g.allergies || []).join(', '),
                     };
                 });
                 setRsvpFormData(formData);
-                setFormTouched({});
+                setRsvpStep(0);
+                setIsEditing(false);
                 setModalStep('group');
             }
         } catch (err) {
@@ -91,30 +107,42 @@ function Home() {
             ...prev,
             [guestId]: { ...prev[guestId], [field]: value },
         }));
-        setFormTouched((prev) => ({
+    }, []);
+
+    const updateRsvpStatus = useCallback((guestId, fieldPrefix, status) => {
+        const statusField = `${fieldPrefix}_accepted_status`;
+        const intField = `${fieldPrefix}_accepted`;
+        setRsvpFormData((prev) => ({
             ...prev,
-            [`${guestId}_${field}`]: true,
+            [guestId]: { ...prev[guestId], [statusField]: status, [intField]: 1 },
         }));
     }, []);
 
     const handleRsvpSubmit = useCallback(async () => {
         if (!guestGroup) return;
-        const incompleteGuests = [guestGroup.primary, ...(guestGroup.accompanied || [])].filter(
-            (g) => !g.response_submitted
-        );
-        if (incompleteGuests.length === 0) return;
+        const allGuests = [guestGroup.primary, ...(guestGroup.accompanied || [])];
+        const incompleteGuests = allGuests.filter((g) => !isRsvpComplete(g));
+        const guestsToSubmit = isEditing ? allGuests : incompleteGuests;
+        if (guestsToSubmit.length === 0) return;
         setSubmitLoading(true);
         try {
             const payload = {
-                guests: incompleteGuests.map((g) => ({
-                    guest_id: g.id,
-                    wedding_accepted: rsvpFormData[g.id]?.wedding_accepted ?? 0,
-                    welcome_drinks_accepted: rsvpFormData[g.id]?.welcome_drinks_accepted ?? 0,
-                    allergies: (rsvpFormData[g.id]?.allergies || '')
-                        .split(',')
-                        .map((s) => s.trim())
-                        .filter(Boolean),
-                })),
+                guests: guestsToSubmit.map((g) => {
+                    const fd = rsvpFormData[g.id] || {};
+                    const weddingStatus = fd.wedding_accepted_status ?? null;
+                    const welcomeStatus = fd.welcome_drinks_accepted_status ?? null;
+                    return {
+                        guest_id: g.id,
+                        wedding_accepted: weddingStatus != null ? 1 : 0,
+                        welcome_drinks_accepted: welcomeStatus != null ? 1 : 0,
+                        wedding_accepted_status: weddingStatus,
+                        welcome_drinks_accepted_status: welcomeStatus,
+                        allergies: (fd.allergies || '')
+                            .split(',')
+                            .map((s) => s.trim())
+                            .filter(Boolean),
+                    };
+                }),
             };
             const res = await fetch(`${API_URL}/api/guests/rsvp`, {
                 method: 'PUT',
@@ -127,24 +155,27 @@ function Home() {
                     const data = await groupRes.json();
                     setGuestGroup(data);
                     const formData = {};
-                    const allGuests = [data.primary, ...(data.accompanied || [])];
-                    allGuests.forEach((g) => {
+                    const refreshedGuests = [data.primary, ...(data.accompanied || [])];
+                    refreshedGuests.forEach((g) => {
                         formData[g.id] = {
                             wedding_accepted: g.wedding_accepted ?? 0,
                             welcome_drinks_accepted: g.welcome_drinks_accepted ?? 0,
+                            wedding_accepted_status: g.wedding_accepted_status ?? null,
+                            welcome_drinks_accepted_status: g.welcome_drinks_accepted_status ?? null,
                             allergies: (g.allergies || []).join(', '),
                         };
                     });
                     setRsvpFormData(formData);
                 }
                 setModalStep('success');
+                if (isEditing) setIsEditing(false);
             }
         } catch (err) {
             console.error("RSVP submit failed:", err);
         } finally {
             setSubmitLoading(false);
         }
-    }, [guestGroup, rsvpFormData]);
+    }, [guestGroup, rsvpFormData, isEditing]);
 
     useEffect(() => {
         const fetchHeroImage = async () => {
@@ -167,15 +198,17 @@ function Home() {
 
     return (
         <div className="home">
-            <div className="header-text">
-               <h2 style={{color:'black'}} className="script_text">Lauren + Ken</h2>
-               <h3 style={{color:'black'}} className="script_subtext">June 13, 2026 &emsp; | &emsp; Washington, D.C.</h3>
+            <Navigation/>
+            <img src={seasideImg} alt="Seaside" className="hero-banner" />
+            <div className="wedding-details">
+                <p className="wedding-date">June 13, 2026</p>
+                <p className="wedding-location">Washington, D.C.</p>
             </div>
             <Countdown/>
 
             <div>
             <Button variant="outlined" onClick={handleRSVPOpen} sx={{color:'black', 
-                    transition: 'box-shadow 0.3s ease-in-out', borderColor:'black'
+                    transition: 'box-shadow 0.3s ease-in-out', borderColor:'black', marginBottom: '20px'
                     , '&:hover': {color:'white', borderColor:'white', backgroundColor:'black'}}}>
                         RSVP HERE
                     </Button>
@@ -244,9 +277,9 @@ function Home() {
                                             <ListItemText primary={guest.name} sx={{ flex: '0 1 auto' }} />
                                             <Typography
                                                 variant="body2"
-                                                sx={{ color: guest.response_submitted ? 'green' : 'red', whiteSpace: 'nowrap', ml: 2 }}
+                                                sx={{ color: isRsvpComplete(guest) ? 'green' : 'red', whiteSpace: 'nowrap', ml: 2 }}
                                             >
-                                                {guest.response_submitted ? "RSVP Complete" : "RSVP Incomplete"}
+                                                {isRsvpComplete(guest) ? "RSVP Complete" : "RSVP Incomplete"}
                                             </Typography>
                                         </ListItemButton>
                                     ))}
@@ -254,157 +287,193 @@ function Home() {
                             )}
                         </div>
                     )}
-                    {modalStep === 'group' && guestGroup && (
-                        <div style={{ flex: 1, marginTop: '25px' }}>
-                            <Typography variant="h6" sx={{ textAlign: 'center', mb: 2 }}>
-                                Your party
-                            </Typography>
-                            <Box sx={{ overflowX: 'auto' }}>
-                                <Box sx={{ display: 'grid', gridTemplateColumns: 'auto 1fr 1fr 1fr', columnGap: 2, rowGap: 1.5, alignItems: 'center', minWidth: 420 }}>
-                                    {/* Header row */}
-                                    <Box />
-                                    <Typography variant="caption" fontWeight="bold" color="text.secondary" sx={{ textAlign: 'center' }}>Wedding (6/13)</Typography>
-                                    <Typography variant="caption" fontWeight="bold" color="text.secondary" sx={{ textAlign: 'center' }}>Welcome Party (6/12)</Typography>
-                                    {[guestGroup.primary, ...(guestGroup.accompanied || [])].some((g) => !g.response_submitted) ? (
-                                        <Typography variant="caption" fontWeight="bold" color="text.secondary" sx={{ textAlign: 'center' }}>Food Constraints</Typography>
-                                    ) : <Box />}
+                    {modalStep === 'group' && guestGroup && (() => {
+                        const allGuests = [guestGroup.primary, ...(guestGroup.accompanied || [])];
+                        const incompleteGuests = allGuests.filter((g) => !isRsvpComplete(g));
+                        const allComplete = incompleteGuests.length === 0;
 
-                                    {[guestGroup.primary, ...(guestGroup.accompanied || [])].map((guest) => (
-                                        <React.Fragment key={guest.id}>
-                                            <Typography variant="body2" fontWeight="bold" sx={{ whiteSpace: 'nowrap' }}>
-                                                {guest.name}
-                                            </Typography>
-                                            {guest.response_submitted ? (
-                                                <>
-                                                    <Typography
-                                                        variant="body2"
-                                                        sx={{ textAlign: 'center', color: 'grey', fontStyle: 'italic' }}
+                        const getGuestStatus = (guest, fieldPrefix) => {
+                            const status = fieldPrefix === 'wedding'
+                                ? guest.wedding_accepted_status
+                                : guest.welcome_drinks_accepted_status;
+                            if (!status) return 'No response';
+                            return status === STATUS_ACCEPTED ? 'Attending' : 'Respectfully declined';
+                        };
+
+                        if (allComplete && !isEditing) {
+                            return (
+                                <div style={{ flex: 1, marginTop: '25px' }}>
+                                    <Typography variant="h6" sx={{ textAlign: 'center', mb: 2 }}>
+                                        Your party
+                                    </Typography>
+                                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 3 }}>
+                                        {allGuests.map((guest) => (
+                                            <Box
+                                                key={guest.id}
+                                                sx={{
+                                                    p: 2,
+                                                    border: '1px solid',
+                                                    borderColor: 'divider',
+                                                    borderRadius: 1,
+                                                }}
+                                            >
+                                                <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 1 }}>
+                                                    {guest.name}
+                                                </Typography>
+                                                <Typography variant="body2" color="text.secondary">
+                                                    Wedding: {getGuestStatus(guest, 'wedding')} · Welcome Party: {getGuestStatus(guest, 'welcome_drinks')}
+                                                </Typography>
+                                            </Box>
+                                        ))}
+                                    </Box>
+                                    <Box sx={{ display: 'flex', justifyContent: 'center', gap: 3, mt: 4, flexWrap: 'wrap' }}>
+                                        <Button
+                                            variant="text"
+                                            onClick={() => setModalStep('search')}
+                                            sx={{
+                                                color: 'black',
+                                                textTransform: 'none',
+                                                fontSize: '0.95rem',
+                                                border: '1px solid transparent',
+                                                borderRadius: 1,
+                                                transition: 'border-color 0.3s ease',
+                                                '&:hover': { backgroundColor: 'transparent', borderColor: 'black' },
+                                            }}
+                                        >
+                                            Back to search
+                                        </Button>
+                                        <Button
+                                            variant="outlined"
+                                            onClick={() => { setIsEditing(true); setRsvpStep(0); }}
+                                            sx={{
+                                                color: 'black',
+                                                textTransform: 'none',
+                                                fontSize: '0.95rem',
+                                                borderColor: 'black',
+                                                '&:hover': { borderColor: 'black', backgroundColor: 'rgba(0,0,0,0.04)' },
+                                            }}
+                                        >
+                                            Edit
+                                        </Button>
+                                        <Button
+                                            variant="text"
+                                            onClick={handleRSVPClose}
+                                            sx={{
+                                                color: 'black',
+                                                textTransform: 'none',
+                                                fontSize: '0.95rem',
+                                                border: '1px solid transparent',
+                                                borderRadius: 1,
+                                                transition: 'border-color 0.3s ease',
+                                                '&:hover': { backgroundColor: 'transparent', borderColor: 'black' },
+                                            }}
+                                        >
+                                            Close
+                                        </Button>
+                                    </Box>
+                                </div>
+                            );
+                        }
+
+                        const guestsToEdit = isEditing ? allGuests : incompleteGuests;
+                        return (
+                            <div style={{ flex: 1, marginTop: '25px' }}>
+                                <Typography variant="overline" color="text.secondary" sx={{ display: 'block', textAlign: 'center', mb: 1 }}>
+                                    Step {rsvpStep + 1} of 3
+                                </Typography>
+                                <Typography variant="h6" sx={{ textAlign: 'center', mb: 3 }}>
+                                    {STEP_LABELS[rsvpStep]}
+                                </Typography>
+                                <Grow in key={rsvpStep} timeout={200}>
+                                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                                        {rsvpStep < 2 ? (
+                                            guestsToEdit.map((guest) => {
+                                                const fieldPrefix = rsvpStep === 0 ? 'wedding' : 'welcome_drinks';
+                                                const status = rsvpFormData[guest.id]?.[`${fieldPrefix}_accepted_status`] ?? null;
+                                                const attendingSelected = status === STATUS_ACCEPTED;
+                                                const declineSelected = status === STATUS_DECLINED;
+                                                return (
+                                                    <Box
+                                                        key={guest.id}
+                                                        sx={{
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'space-between',
+                                                            p: 2,
+                                                            border: '1px solid',
+                                                            borderColor: 'divider',
+                                                            borderRadius: 1,
+                                                        }}
                                                     >
-                                                        Submitted
+                                                        <Typography variant="body1" fontWeight="medium">
+                                                            {guest.name}
+                                                        </Typography>
+                                                        <Box sx={{ display: 'flex', gap: 1 }}>
+                                                            <Button
+                                                                variant="outlined"
+                                                                size="small"
+                                                                onClick={() => updateRsvpStatus(guest.id, fieldPrefix, STATUS_ACCEPTED)}
+                                                                sx={{
+                                                                    borderRadius: '9999px',
+                                                                    textTransform: 'none',
+                                                                    ...(attendingSelected ? { borderColor: 'success.main', color: 'success.main', borderWidth: 2, '&:hover': { borderWidth: 2, borderColor: 'success.dark', backgroundColor: 'rgba(46, 125, 50, 0.08)' } } : {}),
+                                                                }}
+                                                            >
+                                                                Will Attend
+                                                            </Button>
+                                                            <Button
+                                                                variant="outlined"
+                                                                size="small"
+                                                                onClick={() => updateRsvpStatus(guest.id, fieldPrefix, STATUS_DECLINED)}
+                                                                sx={{
+                                                                    borderRadius: '9999px',
+                                                                    textTransform: 'none',
+                                                                    ...(declineSelected ? { borderColor: 'error.main', color: 'error.main', borderWidth: 2, '&:hover': { borderWidth: 2, borderColor: 'error.dark', backgroundColor: 'rgba(211, 47, 47, 0.08)' } } : {}),
+                                                                }}
+                                                            >
+                                                                Respectfully Decline
+                                                            </Button>
+                                                        </Box>
+                                                    </Box>
+                                                );
+                                            })
+                                        ) : (
+                                            guestsToEdit.map((guest) => (
+                                                <Box
+                                                    key={guest.id}
+                                                    sx={{
+                                                        p: 2,
+                                                        border: '1px solid',
+                                                        borderColor: 'divider',
+                                                        borderRadius: 1,
+                                                    }}
+                                                >
+                                                    <Typography variant="body2" fontWeight="medium" sx={{ mb: 1 }}>
+                                                        {guest.name}
                                                     </Typography>
-                                                    <Box />
-                                                    <Box />
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <Box sx={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
-                                                        {formTouched[`${guest.id}_wedding_accepted`] ? (
-                                                            <Grow in timeout={300}>
-                                                                <Box>
-                                                                    <Select
-                                                                        variant="standard"
-                                                                        size="small"
-                                                                        value={rsvpFormData[guest.id]?.wedding_accepted ?? 0}
-                                                                        onChange={(e) => updateRsvpForm(guest.id, 'wedding_accepted', e.target.value)}
-                                                                        disableUnderline
-                                                                        sx={{ fontSize: '0.75rem', '& .MuiSelect-icon': { fontSize: '1rem', color: (rsvpFormData[guest.id]?.wedding_accepted ?? 0) === 1 ? 'green' : 'red' } }}
-                                                                        renderValue={(val) => (
-                                                                            <Typography variant="caption" sx={{ color: val === 1 ? 'green' : 'red' }}>
-                                                                                {val === 1 ? 'Accept' : 'Decline'}
-                                                                            </Typography>
-                                                                        )}
-                                                                    >
-                                                                        <MenuItem value={1} sx={{ fontSize: '0.75rem' }}>Accept</MenuItem>
-                                                                        <MenuItem value={0} sx={{ fontSize: '0.75rem' }}>Decline</MenuItem>
-                                                                    </Select>
-                                                                </Box>
-                                                            </Grow>
-                                                        ) : (
-                                                            <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
-                                                                <Typography
-                                                                    variant="body2"
-                                                                    sx={{ cursor: 'pointer', '&:hover': { color: 'green' } }}
-                                                                    onClick={() => updateRsvpForm(guest.id, 'wedding_accepted', 1)}
-                                                                >
-                                                                    Accept
-                                                                </Typography>
-                                                                <Typography
-                                                                    variant="body2"
-                                                                    sx={{ cursor: 'pointer', '&:hover': { color: 'red' } }}
-                                                                    onClick={() => updateRsvpForm(guest.id, 'wedding_accepted', 0)}
-                                                                >
-                                                                    Decline
-                                                                </Typography>
-                                                            </Box>
-                                                        )}
-                                                    </Box>
-                                                    <Box sx={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
-                                                        {formTouched[`${guest.id}_welcome_drinks_accepted`] ? (
-                                                            <Grow in timeout={300}>
-                                                                <Box>
-                                                                    <Select
-                                                                        variant="standard"
-                                                                        size="small"
-                                                                        value={rsvpFormData[guest.id]?.welcome_drinks_accepted ?? 0}
-                                                                        onChange={(e) => updateRsvpForm(guest.id, 'welcome_drinks_accepted', e.target.value)}
-                                                                        disableUnderline
-                                                                        sx={{ fontSize: '0.75rem', '& .MuiSelect-icon': { fontSize: '1rem', color: (rsvpFormData[guest.id]?.welcome_drinks_accepted ?? 0) === 1 ? 'green' : 'red' } }}
-                                                                        renderValue={(val) => (
-                                                                            <Typography variant="caption" sx={{ color: val === 1 ? 'green' : 'red' }}>
-                                                                                {val === 1 ? 'Accept' : 'Decline'}
-                                                                            </Typography>
-                                                                        )}
-                                                                    >
-                                                                        <MenuItem value={1} sx={{ fontSize: '0.75rem' }}>Accept</MenuItem>
-                                                                        <MenuItem value={0} sx={{ fontSize: '0.75rem' }}>Decline</MenuItem>
-                                                                    </Select>
-                                                                </Box>
-                                                            </Grow>
-                                                        ) : (
-                                                            <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
-                                                                <Typography
-                                                                    variant="body2"
-                                                                    sx={{ cursor: 'pointer', '&:hover': { color: 'green' } }}
-                                                                    onClick={() => updateRsvpForm(guest.id, 'welcome_drinks_accepted', 1)}
-                                                                >
-                                                                    Accept
-                                                                </Typography>
-                                                                <Typography
-                                                                    variant="body2"
-                                                                    sx={{ cursor: 'pointer', '&:hover': { color: 'red' } }}
-                                                                    onClick={() => updateRsvpForm(guest.id, 'welcome_drinks_accepted', 0)}
-                                                                >
-                                                                    Decline
-                                                                </Typography>
-                                                            </Box>
-                                                        )}
-                                                    </Box>
                                                     <TextField
                                                         variant="standard"
-                                                        placeholder="e.g. peanuts"
+                                                        placeholder="e.g. peanuts, shellfish"
                                                         value={rsvpFormData[guest.id]?.allergies ?? ''}
                                                         onChange={(e) => updateRsvpForm(guest.id, 'allergies', e.target.value)}
+                                                        fullWidth
                                                         size="small"
-                                                        sx={{ minWidth: 0 }}
-                                                        inputProps={{ style: { textAlign: 'center' } }}
                                                     />
-                                                </>
-                                            )}
-                                        </React.Fragment>
-                                    ))}
-                                </Box>
-                            </Box>
-                            <Box sx={{ display: 'flex', justifyContent: 'center', gap: 3, mt: 5 }}>
-                                <Button
-                                    variant="text"
-                                    onClick={() => setModalStep('search')}
-                                    sx={{
-                                        color: 'black',
-                                        textTransform: 'none',
-                                        fontSize: '0.95rem',
-                                        border: '1px solid transparent',
-                                        borderRadius: 1,
-                                        transition: 'border-color 0.3s ease',
-                                        '&:hover': { backgroundColor: 'transparent', borderColor: 'black' },
-                                    }}
-                                >
-                                    Back to search
-                                </Button>
-                                {[guestGroup.primary, ...(guestGroup.accompanied || [])].some((g) => !g.response_submitted) && (
+                                                </Box>
+                                            ))
+                                        )}
+                                    </Box>
+                                </Grow>
+                                <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 4, px: 1 }}>
                                     <Button
                                         variant="text"
-                                        onClick={handleRsvpSubmit}
-                                        disabled={submitLoading}
+                                        onClick={() => {
+                                            if (rsvpStep === 0) {
+                                                if (isEditing) { setIsEditing(false); } else { setModalStep('search'); }
+                                            } else {
+                                                setRsvpStep((s) => s - 1);
+                                            }
+                                        }}
                                         sx={{
                                             color: 'black',
                                             textTransform: 'none',
@@ -415,12 +484,28 @@ function Home() {
                                             '&:hover': { backgroundColor: 'transparent', borderColor: 'black' },
                                         }}
                                     >
-                                        {submitLoading ? 'Submitting...' : 'Submit RSVP'}
+                                        {rsvpStep === 0 ? (isEditing ? 'Cancel' : 'Back to search') : 'Back'}
                                     </Button>
-                                )}
-                            </Box>
-                        </div>
-                    )}
+                                    <Button
+                                        variant="text"
+                                        onClick={rsvpStep === 2 ? handleRsvpSubmit : () => setRsvpStep((s) => s + 1)}
+                                        disabled={rsvpStep === 2 && submitLoading}
+                                        sx={{
+                                            color: 'black',
+                                            textTransform: 'none',
+                                            fontSize: '0.95rem',
+                                            border: '1px solid transparent',
+                                            borderRadius: 1,
+                                            transition: 'border-color 0.3s ease',
+                                            '&:hover': { backgroundColor: 'transparent', borderColor: 'black' },
+                                        }}
+                                    >
+                                        {rsvpStep === 2 ? (submitLoading ? 'Submitting...' : 'Submit RSVP') : 'Next'}
+                                    </Button>
+                                </Box>
+                            </div>
+                        );
+                    })()}
                     {modalStep === 'success' && (
                         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 4 }}>
                             <Box sx={{
@@ -495,23 +580,6 @@ function Home() {
                 </Box>
             </Modal>
 
-            <Navigation/>
-
-            <div style={{display:'flex', justifyContent:'center',  marginTop:'20px'}}>
-                {imageLoading ? (
-                    <div style={{height: '70vh', display: 'flex', alignItems: 'center', fontSize: '16px', color: '#666'}}>
-                        Loading...
-                    </div>
-                ) : heroImage ? (
-                    <img src={heroImage} alt="LK Wedding Photo" className="LK"
-                        style={{display:'flex', width:'90%', maxHeight:'70vh', objectFit:'contain', marginBottom:'10px', marginTop:'10px'}} 
-                    />
-                ) : (
-                    <div style={{height: '70vh', display: 'flex', alignItems: 'center', fontSize: '16px', color: '#666'}}>
-                        Image unavailable
-                    </div>
-                )}
-            </div>
 
         </div>
     );

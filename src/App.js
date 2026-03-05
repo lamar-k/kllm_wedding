@@ -2,7 +2,7 @@ import './App.css';
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import React, { useState } from 'react';
 import Home from './Views/Home/Home';
-import weddingLogo from './images/LK_CREST_BLACK_WHITE.png';
+import weddingLogo from './images/LKLogo_Banner.png';
 import FAQ from './Views/FAQ/FAQ';
 import Schedule from './Views/Schedule/Schedule';
 import Gallery from './Views/Gallery/Gallery';
@@ -53,7 +53,7 @@ function App() {
             marginBottom: '30px'
           }}
         />
-        <h2 style={{ marginBottom: '20px', fontFamily: 'inherit' }}>Enter Passcode</h2>
+        {/* <h2 style={{ marginBottom: '20px', fontFamily: 'inherit' }}>Enter Passcode</h2> */}
         <form onSubmit={handlePasscodeSubmit} style={{
           display: 'flex',
           flexDirection: 'column',

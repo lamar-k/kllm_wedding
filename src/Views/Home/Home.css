@@ -1,17 +1,27 @@
-.script_text{
-    font-family: 'Pinyon Script', cursive;
-    font-size: 60px;
-    line-height: 1.5;
-    margin: 20px;
+.hero-banner {
+    width: 100%;
+    display: block;
+    object-fit: cover;
 }
 
-.script_subtext{
-    font-family: 'Pinyon Script', cursive;
-    font-size: 25px;
-    line-height: 1.5;
-    margin: 20px;
+.wedding-details {
+    text-align: center;
+    padding: 1.5rem 1rem;
 }
 
-.header-text{
-    margin-bottom: 30px;
+.wedding-date {
+    font-family: 'Corinthia', cursive;
+    font-size: 2.5rem;
+    font-weight: 400;
+    color: #000;
+    margin: 0 0 0.5rem 0;
+}
+
+.wedding-location {
+    font-family: 'Corinthia', cursive;
+    font-size: 1.5rem;
+    font-weight: 400;
+    color: #000;
+    margin: 0;
+    letter-spacing: 0.05em;
 }
