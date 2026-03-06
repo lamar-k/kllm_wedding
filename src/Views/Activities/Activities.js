@@ -9,7 +9,7 @@ const PREDEFINED_LOCATIONS = [
     {
         id: 'the-mallard',
         name: 'The Mallard',
-        lat: parseFloat(process.env.REACT_APP_GH_LONG) || 38.9066,
+        lat: parseFloat(process.env.REACT_APP_GH_LAT) || 38.9066,
         lng: parseFloat(process.env.REACT_APP_GH_LONG) || -77.0323,
         type: 'venue',
         address: '1337 14th St NW, Washington, DC 20005'

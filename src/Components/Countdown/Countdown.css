@@ -8,14 +8,12 @@
 }
 
 .countdown-figures{
-    font-family: 'Corinthia', cursive;
     margin-bottom: -20px;
     color: black;
     font-size: 30px;
 }
 
 .countdown-desc{
-    font-family: 'Corinthia', cursive;
     color: black;
     font-size: 20px;
 }

@@ -1,20 +1,55 @@
-.nav-bar{
+.nav-rsvp-wrapper {
+    display: flex;
+    justify-content: center;
+    padding: 20px 20px 0;
+}
+
+.nav-bar {
     display: flex;
     justify-content: center;
     align-items: center;
     padding: 10px 20px;
     margin-top: 40px;
+    position: relative;
 }
 
-.nav-link{
+.hamburger-btn {
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    gap: 6px;
+    width: 44px;
+    height: 44px;
+    padding: 10px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    z-index: 1001;
+}
+
+.hamburger-line {
+    display: block;
+    width: 24px;
+    height: 2px;
+    background-color: black;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.nav-links {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.nav-link {
     margin: 20px 40px;
     text-decoration: none;
     color: black;
     font-weight: bold;
 }
 
-
-.nav-link:not(.active):hover{
+.nav-link:not(.active):hover {
     text-decoration: underline;
     text-underline-offset: 6px;
     text-decoration-thickness: 2px;
@@ -28,4 +63,49 @@
     height: 2px;
     background-color: black;
     text-underline-offset: 6px;
-  }
+}
+
+@media (max-width: 768px) {
+    .hamburger-btn {
+        display: flex;
+    }
+
+    .nav-bar {
+        justify-content: flex-end;
+        margin-top: 20px;
+        padding: 10px 20px;
+    }
+
+    .nav-links {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        background-color: white;
+        z-index: 1000;
+        gap: 0;
+        transform: translateX(-100%);
+        opacity: 0;
+        visibility: hidden;
+        transition: transform 0.3s ease, opacity 0.3s ease, visibility 0.3s ease;
+    }
+
+    .nav-links.nav-links-open {
+        transform: translateX(0);
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .nav-links .nav-link {
+        margin: 20px 0;
+        font-size: 1.25rem;
+    }
+
+    .nav-rsvp-wrapper {
+        padding: 15px 20px 0;
+    }
+}
