@@ -43,11 +43,10 @@ function Schedule() {
                         Welcome Drinks
                     </Typography>
                     <Typography>Come join us for welcome drinks!</Typography>
-                    <Typography>Shuttles will be provided from hotels to the venue</Typography>
-                    <Typography>The Graham Georgetown</Typography>
-                    <Typography>1075 Thomas Jefferson St NW, Washington, DC 20007</Typography>
+                    <Typography>The Mallard</Typography>
+                    <Typography>1337 14th St NW, Washington, DC 20005</Typography>
                     <div style={{marginLeft:'30px'}}>
-                    <MapRedirectFunction  latitude={process.env.REACT_APP_GH_LAT} longitude={process.env.REACT_APP_GH_LONG} label="The Graham Georgetown"/>
+                    <MapRedirectFunction  latitude={process.env.REACT_APP_MALLARD_LAT} longitude={process.env.REACT_APP_MALLARD_LONG} label="The Mallard"/>
                     </div>
                     </TimelineContent>
                 </TimelineItem>
@@ -76,7 +75,6 @@ function Schedule() {
                     <Typography variant="h6" component="span">
                         Arrival
                     </Typography>
-                    <Typography>Block hotels are within a 5 min walking distance</Typography>
                     <Typography>The Iron Gate</Typography>
                     <Typography>1734 N St NW, Washington, DC 20036</Typography>
                     <div style={{marginLeft:'30px'}}>
@@ -102,7 +100,7 @@ function Schedule() {
                     </TimelineSeparator>
                     <TimelineContent sx={{ py: '12px', px: 2 }}>
                     <Typography variant="h6" component="span">
-                        Ceremony Begins
+                        Ceremony
                     </Typography>
                     <Typography>The Iron Gate</Typography>
                     </TimelineContent>
