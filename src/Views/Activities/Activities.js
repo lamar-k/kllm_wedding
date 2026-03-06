@@ -57,13 +57,7 @@ const Activities = () => {
     // Backend API URL - defaults to localhost:8000 if not set
     const API_BASE_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8000';
     
-    // Debug: Log predefined locations on mount
-    React.useEffect(() => {
-        console.log('Predefined Locations:', PREDEFINED_LOCATIONS);
-        PREDEFINED_LOCATIONS.forEach(loc => {
-            console.log(`${loc.name} (${loc.type}): lat=${loc.lat}, lng=${loc.lng}`);
-        });
-    }, []);
+
 
     const handleNewMessage = async (message) => {
         // Add user message immediately

@@ -87,7 +87,7 @@ const Travel = () => {
                 </div>
 
                 <div style={{display:'flex', justifyContent:'center', marginBottom:'20px'}}>
-                    <Button onClick={() => handleOpenNewWindow(process.env.REACT_APP_MARRIOTT_URL || 'https://www.marriott.com/reservation/rateListMenu.mi')} variant="outlined" sx={{color:'black', 
+                    <Button onClick={() => handleOpenNewWindow(process.env.REACT_APP_MARRIOTT_URL || 'https://www.marriott.com/event-reservations/reservation-link.mi?id=1751564535836&key=GRP&app=resvlink')} variant="outlined" sx={{color:'black', 
                     transition: 'box-shadow 0.3s ease-in-out', borderColor:'black'
                     , '&:hover': {color:'white', borderColor:'white', backgroundColor:'black'}}}>
                         View
