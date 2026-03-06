@@ -7,12 +7,12 @@ import './Activities.css';
 // Predefined locations for wedding venues and hotels
 const PREDEFINED_LOCATIONS = [
     {
-        id: 'graham-georgetown',
-        name: 'The Graham Georgetown',
-        lat: parseFloat(process.env.REACT_APP_GH_LAT) || 38.9023,
-        lng: parseFloat(process.env.REACT_APP_GH_LONG) || -77.0624,
+        id: 'the-mallard',
+        name: 'The Mallard',
+        lat: parseFloat(process.env.REACT_APP_GH_LONG) || 38.9066,
+        lng: parseFloat(process.env.REACT_APP_GH_LONG) || -77.0323,
         type: 'venue',
-        address: '1075 Thomas Jefferson St NW, Washington, DC 20007'
+        address: '1337 14th St NW, Washington, DC 20005'
     },
     {
         id: 'iron-gate',
