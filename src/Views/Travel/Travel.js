@@ -10,7 +10,6 @@ import Hotel from "@mui/icons-material/Hotel";
 const Travel = () => {
     const handleOpenNewWindow = (url) => {
         window.open(url, '_blank', 'noopener,noreferrer');
-        console.log(url)
     }
 
     return(
