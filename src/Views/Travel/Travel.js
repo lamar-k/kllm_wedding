@@ -54,10 +54,13 @@ const Travel = () => {
                     <Typography sx={{marginBottom:'20px', maxWidth:'50%'}}>Please use the link below to book reservation (group code automatically applied).</Typography>
                 </div>
                 <div style={{display:'flex', justifyContent:'center'}}>
+                    <Typography sx={{marginBottom:'20px', maxWidth:'50%'}}>Group code: MLW</Typography>
+                </div>
+                <div style={{display:'flex', justifyContent:'center'}}>
                     <Typography sx={{marginBottom:'20px', maxWidth:'50%'}}>Hotel is right around the corner from the wedding venue - estimated walk time is 4 minutes!</Typography>
                 </div>
                 <div style={{display:'flex', justifyContent:'center', marginBottom:'20px'}}>
-                    <Button onClick={() => handleOpenNewWindow(process.env.REACT_APP_CANOPY_URL || 'https://www.hilton.com/en/book/reservation/rooms/?ctyhocn=WASCANO&groupCode=KLWED&arrival=20260606&departure=20260608&cid=OM,WW,HILTONLINK,EN,DirectLink&fromId=HILTONLINKEN&fromName=Hilton%20Link')} variant="outlined" sx={{color:'black', 
+                    <Button onClick={() => handleOpenNewWindow(process.env.REACT_APP_CANOPY_URL || 'https://www.hilton.com/en/book/reservation/rooms/?ctyhocn=DCAEMPY&arrivalDate=2026-06-12&departureDate=2026-06-14&groupCode=MLW&room1NumAdults=1&cid=OM%2CWW%2CHILTONLINK%2CEN%2CDirectLink')} variant="outlined" sx={{color:'black', 
                     transition: 'box-shadow 0.3s ease-in-out', borderColor:'black'
                     , '&:hover': {color:'white', borderColor:'white', backgroundColor:'black'}}}>
                         View
@@ -78,10 +81,14 @@ const Travel = () => {
                     <Typography sx={{marginBottom:'20px', maxWidth:'50%'}}>Please use the link below to book reservation (group code automatically applied).</Typography>
                 </div>
                 <div style={{display:'flex', justifyContent:'center'}}>
+                    <Typography sx={{marginBottom:'20px', maxWidth:'50%'}}>Group code: LKWLKWA</Typography>
+                </div>
+                <div style={{display:'flex', justifyContent:'center'}}>
                     <Typography sx={{marginBottom:'20px', maxWidth:'50%'}}>Hotel is right across the street from the venue!</Typography>
                 </div>
+
                 <div style={{display:'flex', justifyContent:'center', marginBottom:'20px'}}>
-                    <Button onClick={() => handleOpenNewWindow(process.env.REACT_APP_MARRIOTT_URL || 'https://www.marriott.com/events/start.mi?id=1672462466013000000000&key=GRP')} variant="outlined" sx={{color:'black', 
+                    <Button onClick={() => handleOpenNewWindow(process.env.REACT_APP_MARRIOTT_URL || 'https://www.marriott.com/reservation/rateListMenu.mi')} variant="outlined" sx={{color:'black', 
                     transition: 'box-shadow 0.3s ease-in-out', borderColor:'black'
                     , '&:hover': {color:'white', borderColor:'white', backgroundColor:'black'}}}>
                         View
