@@ -57,7 +57,7 @@ const Travel = () => {
                     <Typography sx={{marginBottom:'20px', maxWidth:'50%'}}>Hotel is right around the corner from the wedding venue - estimated walk time is 4 minutes!</Typography>
                 </div>
                 <div style={{display:'flex', justifyContent:'center', marginBottom:'20px'}}>
-                    <Button onClick={() => handleOpenNewWindow(process.env.REACT_APP_CANOPY_URL)} variant="outlined" sx={{color:'black', 
+                    <Button onClick={() => handleOpenNewWindow(process.env.REACT_APP_CANOPY_URL || 'https://www.hilton.com/en/book/reservation/rooms/?ctyhocn=WASCANO&groupCode=KLWED&arrival=20260606&departure=20260608&cid=OM,WW,HILTONLINK,EN,DirectLink&fromId=HILTONLINKEN&fromName=Hilton%20Link')} variant="outlined" sx={{color:'black', 
                     transition: 'box-shadow 0.3s ease-in-out', borderColor:'black'
                     , '&:hover': {color:'white', borderColor:'white', backgroundColor:'black'}}}>
                         View
@@ -81,7 +81,7 @@ const Travel = () => {
                     <Typography sx={{marginBottom:'20px', maxWidth:'50%'}}>Hotel is right across the street from the venue!</Typography>
                 </div>
                 <div style={{display:'flex', justifyContent:'center', marginBottom:'20px'}}>
-                    <Button onClick={() => handleOpenNewWindow(process.env.REACT_APP_MARRIOTT_URL)} variant="outlined" sx={{color:'black', 
+                    <Button onClick={() => handleOpenNewWindow(process.env.REACT_APP_MARRIOTT_URL || 'https://www.marriott.com/events/start.mi?id=1672462466013000000000&key=GRP')} variant="outlined" sx={{color:'black', 
                     transition: 'box-shadow 0.3s ease-in-out', borderColor:'black'
                     , '&:hover': {color:'white', borderColor:'white', backgroundColor:'black'}}}>
                         View

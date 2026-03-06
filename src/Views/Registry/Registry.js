@@ -5,7 +5,6 @@ import {
     Button, 
     Card, 
     CardContent, 
-    CardMedia, 
     Grid, 
     Box, 
     TextField,
@@ -17,12 +16,17 @@ import {
 } from "@mui/material";
 import CloseIcon from '@mui/icons-material/Close';
 import HomeIcon from '@mui/icons-material/Home';
+import CardGiftcardIcon from '@mui/icons-material/CardGiftcard';
+import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import './Registry.css';
-import { mockRegistryItems } from './registryConfig';
+
+// TODO: Replace with actual registry URLs when provided
+const CRATE_AND_BARREL_REGISTRY_URL = process.env.REACT_APP_CRATE_AND_BARREL_REGISTRY_URL || 'https://www.crateandbarrel.com/gift-registry/lauren-mcallister-and-ken-lamar/r7380081';
+const AMAZON_REGISTRY_URL = process.env.REACT_APP_AMAZON_REGISTRY_URL || 'https://www.amazon.com/wedding/share/KenandLauren';
 
 const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY);
 const apiUrl = process.env.REACT_APP_BACKEND_URL || "http://localhost:8000";
@@ -48,8 +52,6 @@ const blackButtonSx = {
 function CheckoutForm({ amount, contributorName, onSuccess, onError }) {
     const stripe = useStripe();
     const elements = useElements();
-    console.log(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY);
-    console.log(stripePromise);
     const [processing, setProcessing] = useState(false);
     const [cardError, setCardError] = useState(null);
 
@@ -129,23 +131,15 @@ const Registry = () => {
     const [houseModalOpen, setHouseModalOpen] = useState(false);
     const [contributionAmount, setContributionAmount] = useState('');
     const [contributorName, setContributorName] = useState('');
-    const [purchasedItems, setPurchasedItems] = useState(new Set());
 
     // Modal step: 'form' | 'payment' | 'success' | 'error'
     const [modalStep, setModalStep] = useState('form');
     const [errorMessage, setErrorMessage] = useState('');
 
-    const handlePurchaseItem = (itemId) => {
-        setPurchasedItems(prev => new Set([...prev, itemId]));
-        alert(`Thank you! ${mockRegistryItems.find(item => item.id === itemId)?.name} has been marked as purchased.`);
-    };
-
     const handleContinueToPayment = () => {
         if (!contributionAmount || !contributorName) return;
         if (parseFloat(contributionAmount) <= 0) return;
         setModalStep('payment');
-        console.log(stripePromise);
-        console.log(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY);
     };
 
     const handlePaymentSuccess = () => {
@@ -269,112 +263,82 @@ const Registry = () => {
                 </Typography>
                 
                 <Typography variant="body1" sx={{ marginBottom: '40px', textAlign: 'center', maxWidth: '800px', margin: '0 auto 40px' }}>
-                    We're so grateful for your love and support! Below are some items we'd love to have in our new home together. 
-                    You can also contribute to our house fund if you prefer.
+                    We're so grateful for your love and support! Browse our registries below or contribute to our house fund.
                 </Typography>
 
-                {/* House Fund Section */}
-                <Box 
-                    sx={{ 
-                        marginBottom: '60px',
-                        padding: '30px',
-                        backgroundColor: '#f5f5f5',
-                        borderRadius: '8px',
-                        maxWidth: '600px',
-                        margin: '0 auto 60px',
-                        textAlign: 'center'
-                    }}
-                >
-                    <HomeIcon sx={{ fontSize: 50, color: '#1976d2', marginBottom: '10px' }} />
-                    <Typography variant="h5" sx={{ marginBottom: '15px' }}>
-                        House Fund
-                    </Typography>
-                    <Typography variant="body2" sx={{ marginBottom: '20px', color: '#666' }}>
-                        Help us build our dream home! Any contribution is greatly appreciated.
-                    </Typography>
-                    <Button 
-                        variant="contained" 
-                        onClick={handleHouseModalOpen}
-                        sx={blackButtonSx}
-                    >
-                        Contribute to House Fund
-                    </Button>
-                </Box>
-
-                {/* Registry Items Grid */}
-                <Typography variant="h5" sx={{ marginBottom: '30px', textAlign: 'center' }}>
-                    Registry Items
-                </Typography>
-                
                 <Grid container spacing={4} sx={{ maxWidth: '1200px', margin: '0 auto', padding: '0 20px', justifyContent: 'center' }}>
-                    {mockRegistryItems.map((item) => {
-                        const isPurchased = purchasedItems.has(item.id);
-                        return (
-                            <Grid item xs={12} sm={6} md={4} key={item.id}>
-                                <Card 
-                                    sx={{ 
-                                        height: '100%', 
-                                        display: 'flex', 
-                                        flexDirection: 'column',
-                                        opacity: isPurchased ? 0.6 : 1,
-                                        position: 'relative'
-                                    }}
+                    {/* House Fund */}
+                    <Grid item xs={12} md={4}>
+                        <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column', textAlign: 'center', padding: 3 }}>
+                            <HomeIcon sx={{ fontSize: 50, color: '#1976d2', marginBottom: 1, mx: 'auto' }} />
+                            <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                <Typography variant="h5" sx={{ marginBottom: 1 }}>
+                                    House Fund
+                                </Typography>
+                                <Typography variant="body2" sx={{ marginBottom: 2, color: '#666', flexGrow: 1 }}>
+                                    Help us build our dream home! Any contribution is greatly appreciated.
+                                </Typography>
+                                <Button
+                                    variant="contained"
+                                    fullWidth
+                                    onClick={handleHouseModalOpen}
+                                    sx={blackButtonSx}
                                 >
-                                    {isPurchased && (
-                                        <Box
-                                            sx={{
-                                                position: 'absolute',
-                                                top: 10,
-                                                right: 10,
-                                                backgroundColor: 'rgba(0, 0, 0, 0.7)',
-                                                color: 'white',
-                                                padding: '5px 10px',
-                                                borderRadius: '4px',
-                                                zIndex: 1
-                                            }}
-                                        >
-                                            <Typography variant="caption">Purchased</Typography>
-                                        </Box>
-                                    )}
-                                    <CardMedia
-                                        component="img"
-                                        height="200"
-                                        image={item.image}
-                                        alt={item.name}
-                                        sx={{ objectFit: 'cover' }}
-                                    />
-                                    <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
-                                        <Typography variant="h6" component="h3" sx={{ marginBottom: '10px' }}>
-                                            {item.name}
-                                        </Typography>
-                                        <Typography variant="body2" color="text.secondary" sx={{ marginBottom: '15px', flexGrow: 1 }}>
-                                            {item.description}
-                                        </Typography>
-                                        <Typography variant="h6" color="primary" sx={{ marginBottom: '15px' }}>
-                                            ${item.price.toFixed(2)}
-                                        </Typography>
-                                        <Button
-                                            variant={isPurchased ? "outlined" : "contained"}
-                                            fullWidth
-                                            onClick={() => handlePurchaseItem(item.id)}
-                                            disabled={isPurchased}
-                                            sx={{
-                                                backgroundColor: isPurchased ? 'transparent' : 'black',
-                                                color: isPurchased ? 'black' : 'white',
-                                                borderColor: 'black',
-                                                '&:hover': {
-                                                    backgroundColor: isPurchased ? 'transparent' : '#333',
-                                                    borderColor: 'black'
-                                                }
-                                            }}
-                                        >
-                                            {isPurchased ? 'Already Purchased' : 'Mark as Purchased'}
-                                        </Button>
-                                    </CardContent>
-                                </Card>
-                            </Grid>
-                        );
-                    })}
+                                    Contribute
+                                </Button>
+                            </CardContent>
+                        </Card>
+                    </Grid>
+
+                    {/* Crate & Barrel */}
+                    <Grid item xs={12} md={4}>
+                        <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column', textAlign: 'center', padding: 3 }}>
+                            <CardGiftcardIcon sx={{ fontSize: 50, color: '#1976d2', marginBottom: 1, mx: 'auto' }} />
+                            <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                <Typography variant="h5" sx={{ marginBottom: 1 }}>
+                                    Crate & Barrel
+                                </Typography>
+                                <Typography variant="body2" sx={{ marginBottom: 2, color: '#666', flexGrow: 1 }}>
+                                    Browse our Crate & Barrel registry for home goods we'd love.
+                                </Typography>
+                                <Button
+                                    variant="contained"
+                                    fullWidth
+                                    href={CRATE_AND_BARREL_REGISTRY_URL}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    sx={blackButtonSx}
+                                >
+                                    View Registry
+                                </Button>
+                            </CardContent>
+                        </Card>
+                    </Grid>
+
+                    {/* Amazon */}
+                    <Grid item xs={12} md={4}>
+                        <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column', textAlign: 'center', padding: 3 }}>
+                            <ShoppingCartIcon sx={{ fontSize: 50, color: '#1976d2', marginBottom: 1, mx: 'auto' }} />
+                            <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                <Typography variant="h5" sx={{ marginBottom: 1 }}>
+                                    Amazon
+                                </Typography>
+                                <Typography variant="body2" sx={{ marginBottom: 2, color: '#666', flexGrow: 1 }}>
+                                    Find items from our Amazon wedding registry.
+                                </Typography>
+                                <Button
+                                    variant="contained"
+                                    fullWidth
+                                    href={AMAZON_REGISTRY_URL}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    sx={blackButtonSx}
+                                >
+                                    View Registry
+                                </Button>
+                            </CardContent>
+                        </Card>
+                    </Grid>
                 </Grid>
             </div>
 
