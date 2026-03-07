@@ -281,8 +281,9 @@ const Registry = () => {
                                 <Button
                                     variant="contained"
                                     fullWidth
-                                    onClick={handleHouseModalOpen}
-                                    sx={blackButtonSx}
+                                    disabled
+                                    onClick={(e) => e.preventDefault()}
+                                    sx={{ ...blackButtonSx, pointerEvents: 'none' }}
                                 >
                                     Contribute
                                 </Button>
