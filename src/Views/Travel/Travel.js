@@ -70,7 +70,7 @@ const Travel = () => {
 
                 <div style={{display:'flex', justifyContent:'center'}}>
                     <div style={{display:'flex', justifyContent:'center'}}>
-                        <Typography variant="h5" sx={{marginTop:'20px', marginBottom:'20px'}}>Courtyard Dupont Cirlce by Marriott</Typography>
+                        <Typography variant="h5" sx={{marginTop:'20px', marginBottom:'20px'}}>Courtyard Dupont Circle by Marriott</Typography>
                     </div>
                 </div>
                 <div>
