@@ -135,7 +135,6 @@ const Gallery = () => {
                 }}
               >
                 {images.map((image, index) => {
-                  const imageWidth = 300;
                   const imageHeight = 300;
                   const rowSpan = Math.ceil((imageHeight + 12) / 10);
                   

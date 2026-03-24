@@ -1,17 +1,16 @@
 import React, { useState } from "react";
 import Navigation from "../../Components/Navigation/Navigation";
-import { 
-    Typography, 
-    Button, 
-    Card, 
-    CardContent, 
-    Grid, 
-    Box, 
+import {
+    Typography,
+    Button,
+    Card,
+    CardContent,
+    Grid,
+    Box,
     TextField,
     Modal,
     IconButton,
     InputAdornment,
-    CircularProgress,
     Alert
 } from "@mui/material";
 import CloseIcon from '@mui/icons-material/Close';
@@ -20,28 +19,15 @@ import CardGiftcardIcon from '@mui/icons-material/CardGiftcard';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import { loadStripe } from '@stripe/stripe-js';
-import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
+import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
 import './Registry.css';
 
 // TODO: Replace with actual registry URLs when provided
 const CRATE_AND_BARREL_REGISTRY_URL = process.env.REACT_APP_CRATE_AND_BARREL_REGISTRY_URL || 'https://www.crateandbarrel.com/gift-registry/lauren-mcallister-and-ken-lamar/r7380081';
 const AMAZON_REGISTRY_URL = process.env.REACT_APP_AMAZON_REGISTRY_URL || 'https://www.amazon.com/wedding/share/KenandLauren';
 
-const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY);
 const apiUrl = process.env.REACT_APP_BACKEND_URL || "http://localhost:8000";
-
-const CARD_ELEMENT_OPTIONS = {
-    style: {
-        base: {
-            fontSize: '16px',
-            color: '#424770',
-            '::placeholder': { color: '#aab7c4' },
-            padding: '12px',
-        },
-        invalid: { color: '#9e2146' },
-    },
-};
+const paypalClientId = process.env.REACT_APP_PAYPAL_CLIENT_ID || "";
 
 const blackButtonSx = {
     backgroundColor: 'black',
@@ -49,81 +35,60 @@ const blackButtonSx = {
     '&:hover': { backgroundColor: '#333' },
 };
 
-function CheckoutForm({ amount, contributorName, onSuccess, onError }) {
-    const stripe = useStripe();
-    const elements = useElements();
-    const [processing, setProcessing] = useState(false);
-    const [cardError, setCardError] = useState(null);
+async function parseErrorDetail(res) {
+    try {
+        const data = await res.json();
+        const d = data.detail;
+        if (typeof d === 'string') return d;
+        if (Array.isArray(d)) return d.map((x) => x.msg || x).join(', ');
+        return JSON.stringify(d);
+    } catch {
+        return 'Request failed';
+    }
+}
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        if (!stripe || !elements) return;
-
-        setProcessing(true);
-        setCardError(null);
-
-        try {
-            const res = await fetch(`${apiUrl}/api/payment/create-payment-intent`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ amount: parseFloat(amount), contributor_name: contributorName }),
-            });
-
-            if (!res.ok) {
-                const err = await res.json();
-                throw new Error(err.detail || 'Failed to create payment');
-            }
-
-            const { clientSecret } = await res.json();
-
-            const result = await stripe.confirmCardPayment(clientSecret, {
-                payment_method: { card: elements.getElement(CardElement) },
-            });
-
-            if (result.error) {
-                setCardError(result.error.message);
-                onError(result.error.message);
-            } else if (result.paymentIntent.status === 'succeeded') {
-                onSuccess();
-            }
-        } catch (err) {
-            setCardError(err.message);
-            onError(err.message);
-        } finally {
-            setProcessing(false);
-        }
-    };
-
+function HouseFundPayPalButtons({ amount, contributorName, onSuccess, onError }) {
     return (
-        <form onSubmit={handleSubmit}>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                <Typography variant="body2" sx={{ textAlign: 'center', color: '#666', mb: 1 }}>
-                    Contributing <strong>${parseFloat(amount).toFixed(2)}</strong> as <strong>{contributorName}</strong>
-                </Typography>
-                <Box sx={{
-                    border: '1px solid #ccc',
-                    borderRadius: '4px',
-                    padding: '14px',
-                    '&:focus-within': { borderColor: '#000' },
-                }}>
-                    <CardElement options={CARD_ELEMENT_OPTIONS} />
-                </Box>
-                {cardError && <Alert severity="error">{cardError}</Alert>}
-                <Button
-                    type="submit"
-                    variant="contained"
-                    fullWidth
-                    disabled={!stripe || processing}
-                    sx={{ ...blackButtonSx, marginTop: '10px' }}
-                >
-                    {processing ? (
-                        <CircularProgress size={24} sx={{ color: 'white' }} />
-                    ) : (
-                        `Pay $${parseFloat(amount).toFixed(2)}`
-                    )}
-                </Button>
-            </Box>
-        </form>
+        <PayPalButtons
+            style={{ layout: 'vertical' }}
+            createOrder={async () => {
+                const res = await fetch(`${apiUrl}/api/payment/create-order`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        amount: parseFloat(amount),
+                        contributor_name: contributorName,
+                    }),
+                });
+                if (!res.ok) {
+                    const msg = await parseErrorDetail(res);
+                    throw new Error(msg);
+                }
+                const data = await res.json();
+                return data.order_id;
+            }}
+            onApprove={async (data) => {
+                const res = await fetch(`${apiUrl}/api/payment/capture-order`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ order_id: data.orderID }),
+                });
+                if (!res.ok) {
+                    const msg = await parseErrorDetail(res);
+                    onError(msg);
+                    return;
+                }
+                const result = await res.json();
+                if (result.status && String(result.status).toUpperCase() !== 'COMPLETED') {
+                    onError('Payment was not completed.');
+                    return;
+                }
+                onSuccess();
+            }}
+            onError={(err) => {
+                onError(err?.message || 'PayPal could not process the payment.');
+            }}
+        />
     );
 }
 
@@ -139,6 +104,7 @@ const Registry = () => {
     const handleContinueToPayment = () => {
         if (!contributionAmount || !contributorName) return;
         if (parseFloat(contributionAmount) <= 0) return;
+        setErrorMessage('');
         setModalStep('payment');
     };
 
@@ -195,17 +161,33 @@ const Registry = () => {
                     >
                         Back
                     </Button>
-                    <Typography variant="h6" component="h2" sx={{ mb: 3, textAlign: 'center' }}>
-                        Payment Details
+                    <Typography variant="h6" component="h2" sx={{ mb: 2, textAlign: 'center' }}>
+                        Pay with PayPal
                     </Typography>
-                    <Elements stripe={stripePromise}>
-                        <CheckoutForm
-                            amount={contributionAmount}
-                            contributorName={contributorName}
-                            onSuccess={handlePaymentSuccess}
-                            onError={handlePaymentError}
-                        />
-                    </Elements>
+                    <Typography variant="body2" sx={{ textAlign: 'center', color: '#666', mb: 2 }}>
+                        Contributing <strong>${parseFloat(contributionAmount).toFixed(2)}</strong> as <strong>{contributorName}</strong>
+                    </Typography>
+                    {errorMessage && <Alert severity="error" sx={{ mb: 2 }}>{errorMessage}</Alert>}
+                    {!paypalClientId ? (
+                        <Alert severity="warning">
+                            PayPal is not configured. Set <code>REACT_APP_PAYPAL_CLIENT_ID</code> in your environment.
+                        </Alert>
+                    ) : (
+                        <PayPalScriptProvider
+                            options={{
+                                clientId: paypalClientId,
+                                currency: 'USD',
+                                intent: 'capture',
+                            }}
+                        >
+                            <HouseFundPayPalButtons
+                                amount={contributionAmount}
+                                contributorName={contributorName}
+                                onSuccess={handlePaymentSuccess}
+                                onError={handlePaymentError}
+                            />
+                        </PayPalScriptProvider>
+                    )}
                 </>
             );
         }
@@ -256,12 +238,12 @@ const Registry = () => {
     return (
         <div className="registry">
             <Navigation />
-            
+
             <div className="registry-container">
                 <Typography variant="h4" sx={{ marginTop: '40px', marginBottom: '20px', textAlign: 'center' }}>
                     Wedding Registry
                 </Typography>
-                
+
                 <Typography variant="body1" sx={{ marginBottom: '40px', textAlign: 'center', maxWidth: '800px', margin: '0 auto 40px' }}>
                     We're so grateful for your love and support! Browse our registries below or contribute to our house fund.
                 </Typography>
@@ -281,9 +263,8 @@ const Registry = () => {
                                 <Button
                                     variant="contained"
                                     fullWidth
-                                    disabled
-                                    onClick={(e) => e.preventDefault()}
-                                    sx={{ ...blackButtonSx, pointerEvents: 'none' }}
+                                    onClick={handleHouseModalOpen}
+                                    sx={blackButtonSx}
                                 >
                                     Contribute
                                 </Button>

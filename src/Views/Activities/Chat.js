@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { TextField, Button, Box, Typography, Paper, CircularProgress, Chip } from "@mui/material";
 import SendIcon from '@mui/icons-material/Send';
-import LocationOnIcon from '@mui/icons-material/LocationOn';
 import HotelIcon from '@mui/icons-material/Hotel';
 import RestaurantIcon from '@mui/icons-material/Restaurant';
 import ClearIcon from '@mui/icons-material/Clear';
