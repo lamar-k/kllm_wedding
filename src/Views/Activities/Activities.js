@@ -8,7 +8,7 @@ import './Activities.css';
 const PREDEFINED_LOCATIONS = [
     {
         id: 'the-mallard',
-        name: 'The Mallard',
+        name: 'Mallard',
         lat: parseFloat(process.env.REACT_APP_GH_LAT) || 38.9066,
         lng: parseFloat(process.env.REACT_APP_GH_LONG) || -77.0323,
         type: 'venue',
@@ -16,7 +16,7 @@ const PREDEFINED_LOCATIONS = [
     },
     {
         id: 'iron-gate',
-        name: 'The Iron Gate',
+        name: 'Iron Gate Restaurant',
         lat: parseFloat(process.env.REACT_APP_IG_LAT) || 38.9066,
         lng: parseFloat(process.env.REACT_APP_IG_LONG) || -77.0422,
         type: 'venue',
@@ -24,7 +24,7 @@ const PREDEFINED_LOCATIONS = [
     },
     {
         id: 'church-key',
-        name: 'The Church Key',
+        name: 'ChurchKey',
         lat: parseFloat(process.env.REACT_APP_CK_LAT) || 38.9078,
         lng: parseFloat(process.env.REACT_APP_CK_LONG) || -77.0320,
         type: 'venue',
