@@ -29,7 +29,7 @@ function Schedule() {
                     variant="body2"
                     color="text.secondary"
                     >
-                    8:00 PM
+                    7:30 PM
                     </TimelineOppositeContent>
                     <TimelineSeparator>
                     <TimelineConnector />
@@ -40,10 +40,10 @@ function Schedule() {
                     </TimelineSeparator>
                     <TimelineContent sx={{ py: '12px', px: 2 }}>
                     <Typography variant="h6" component="span">
-                        Welcome Drinks
+                        Welcome Party
                     </Typography>
                     <Typography>Come join us for welcome drinks!</Typography>
-                    <Typography>The Mallard</Typography>
+                    <Typography>Mallard</Typography>
                     <Typography>1337 14th St NW, Washington, DC 20005</Typography>
                     <div style={{marginLeft:'30px'}}>
                     <MapRedirectFunction  latitude={process.env.REACT_APP_MALLARD_LAT} longitude={process.env.REACT_APP_MALLARD_LONG} label="The Mallard"/>
@@ -75,7 +75,7 @@ function Schedule() {
                     <Typography variant="h6" component="span">
                         Arrival
                     </Typography>
-                    <Typography>The Iron Gate</Typography>
+                    <Typography>Iron Gate Restaurant</Typography>
                     <Typography>1734 N St NW, Washington, DC 20036</Typography>
                     <div style={{marginLeft:'30px'}}>
                     <MapRedirectFunction  latitude={process.env.REACT_APP_IG_LAT} longitude={process.env.REACT_APP_IG_LONG} label="The Iron Gate Restaurant"/>
@@ -102,7 +102,7 @@ function Schedule() {
                     <Typography variant="h6" component="span">
                         Ceremony
                     </Typography>
-                    <Typography>The Iron Gate</Typography>
+                    <Typography>Iron Gate Restaurant</Typography>
                     </TimelineContent>
                 </TimelineItem>
                 <TimelineItem>
@@ -125,7 +125,7 @@ function Schedule() {
                     <Typography variant="h6" component="span">
                         Cocktail Hour
                     </Typography>
-                    <Typography>The Iron Gate</Typography>
+                    <Typography>Iron Gate Restaurant</Typography>
                     </TimelineContent>
                 </TimelineItem>
                 <TimelineItem>
@@ -148,7 +148,7 @@ function Schedule() {
                     <Typography variant="h6" component="span">
                         Reception
                     </Typography>
-                    <Typography>The Iron Gate</Typography>
+                    <Typography>Iron Gate Restaurant</Typography>
                     </TimelineContent>
                 </TimelineItem>
                 <TimelineItem>
@@ -172,7 +172,7 @@ function Schedule() {
                         After Party
                     </Typography>
                     <Typography>Join us for an after party at The Church Key</Typography>
-                    <Typography>The Church Key</Typography>
+                    <Typography>ChurchKey</Typography>
                     <Typography>1337 14th St NW, Washington, DC 20005</Typography>
                     <div style={{marginLeft:'30px'}}>
                     <MapRedirectFunction  latitude={process.env.REACT_APP_CK_LAT} longitude={process.env.REACT_APP_CK_LONG} label="The Church Key"/>
