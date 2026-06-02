@@ -54,14 +54,42 @@ const Map = ({ locations, predefinedLocations = [], startingLocation = null }) =
             dataSource.add([point]);
         });
 
-        // Remove existing symbol layers
+        // Remove existing symbol and bubble layers
         const existingLayers = map.layers.getLayers().filter(layer => 
-            layer instanceof atlas.layer.SymbolLayer && 
-            (layer.getId() === 'predefined-layer' || layer.getId() === 'extracted-layer' || !layer.getId())
+            (layer instanceof atlas.layer.SymbolLayer || layer instanceof atlas.layer.BubbleLayer) && 
+            ['predefined-layer', 'extracted-layer', 'predefined-bubble-layer', 'extracted-bubble-layer'].includes(layer.getId())
         );
         existingLayers.forEach(layer => map.layers.remove(layer));
 
-        // Add layer for predefined locations with conditional styling
+        // Bubble layers render colored dots (added first so they appear under text)
+        const predefinedBubbleLayer = new atlas.layer.BubbleLayer(predefinedDataSource, 'predefined-bubble-layer', {
+            color: [
+                'case',
+                ['get', 'isStarting'], '#FDD835',
+                ['==', ['get', 'locationType'], 'venue'], '#d32f2f',
+                '#1565C0'
+            ],
+            radius: [
+                'case',
+                ['get', 'isStarting'], 10,
+                8
+            ],
+            strokeColor: 'white',
+            strokeWidth: 2,
+            allowOverlap: true
+        });
+        map.layers.add(predefinedBubbleLayer);
+
+        const extractedBubbleLayer = new atlas.layer.BubbleLayer(dataSource, 'extracted-bubble-layer', {
+            color: '#1976d2',
+            radius: 8,
+            strokeColor: 'white',
+            strokeWidth: 2,
+            allowOverlap: true
+        });
+        map.layers.add(extractedBubbleLayer);
+
+        // Text label layers on top of the dots
         const predefinedLayer = new atlas.layer.SymbolLayer(predefinedDataSource, 'predefined-layer', {
             textOptions: {
                 textField: ['get', 'title'],
@@ -69,37 +97,26 @@ const Map = ({ locations, predefinedLocations = [], startingLocation = null }) =
                 color: 'black',
                 haloColor: 'white',
                 haloWidth: 2,
-                size: 12
+                size: 12,
+                allowOverlap: true
             },
             iconOptions: {
-                image: [
-                    'case',
-                    ['get', 'isStarting'], 'pin-round-yellow',  // Starting location
-                    ['==', ['get', 'locationType'], 'venue'], 'pin-round-red',  // Venues
-                    'pin-round-darkblue'  // Hotels
-                ],
-                anchor: 'center',
-                size: [
-                    'case',
-                    ['get', 'isStarting'], 1.2,  // Make starting location larger
-                    1.0
-                ]
+                image: 'none'
             }
         });
         map.layers.add(predefinedLayer);
 
-        // Add layer for chat-extracted locations
         const extractedLayer = new atlas.layer.SymbolLayer(dataSource, 'extracted-layer', {
             textOptions: {
                 textField: ['get', 'title'],
                 offset: [0, -2],
                 color: 'black',
                 haloColor: 'white',
-                haloWidth: 2
+                haloWidth: 2,
+                allowOverlap: true
             },
             iconOptions: {
-                image: 'pin-round-blue',
-                anchor: 'center'
+                image: 'none'
             }
         });
         map.layers.add(extractedLayer);
