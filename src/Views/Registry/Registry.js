@@ -334,10 +334,16 @@ const Registry = () => {
             >
                 <Box sx={{
                     position: 'absolute',
-                    top: '50%',
                     left: '50%',
-                    transform: 'translate(-50%, -50%)',
+                    transform: 'translateX(-50%)',
+                    // Top-anchored (not vertically centered): PayPal’s expanded card fields grow
+                    // downward so the panel never shifts above the viewport.
+                    top: 'max(16px, env(safe-area-inset-top))',
+                    maxHeight:
+                        'calc(100vh - max(16px, env(safe-area-inset-top)) - max(16px, env(safe-area-inset-bottom)))',
                     width: { xs: '90%', sm: 500 },
+                    overflowY: 'auto',
+                    WebkitOverflowScrolling: 'touch',
                     bgcolor: 'background.paper',
                     boxShadow: 24,
                     p: 4,
